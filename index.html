@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSU Visualizer — Disjoint Set Union</title>
+    <meta name="description" content="Interactive step-by-step visualizer for Disjoint Set Union (Union-Find) data structure with union by size.">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Step Description Bar -->
+        <div id="step-bar" class="idle">
+            <div id="step-description">Initialize nodes to begin visualizing DSU operations.</div>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <div id="component-badge" class="component-badge" style="display:none;">
+                    <span class="comp-icon">🌐</span>
+                    <span class="comp-label">Components:</span>
+                    <strong id="comp-count-val">0</strong>
+                </div>
+                <button id="btn-toggle-history" class="btn btn-secondary" title="Toggle Components History">📊 History</button>
+                <button id="btn-toggle-code" class="btn btn-secondary" title="Toggle Code Panel">💻 Code</button>
+                <div id="step-counter" style="display:none;"></div>
+            </div>
+        </div>
+
+        <!-- Main Content: Tree + Code + History -->
+        <div id="main-content">
+            <div id="canvas-container">
+                <svg id="tree-svg">
+                    <defs>
+                        <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                            <polygon points="0 0, 8 3, 0 6" class="edge-arrow"/>
+                        </marker>
+                    </defs>
+                    <g id="viewport">
+                        <g id="edges-group"></g>
+                        <g id="nodes-group"></g>
+                    </g>
+                </svg>
+                <div id="empty-state">
+                    <div class="empty-icon">⊔</div>
+                    <h3>DSU Visualizer</h3>
+                    <p>Enter the number of nodes and click <strong>Init</strong> to start.</p>
+                </div>
+                <div id="zoom-indicator">100%</div>
+            </div>
+
+            <!-- History Panel (Components Column) -->
+            <div id="history-panel" class="collapsed">
+                <div id="history-header">
+                    <span>Component History</span>
+                    <button id="btn-close-history" class="btn btn-secondary btn-icon" style="padding:2px 6px; font-size:10px; margin-left:auto;">✕</button>
+                </div>
+                <div id="history-scroll">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Operation</th>
+                                <th>Components</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-table-body">
+                            <!-- Injected by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="code-panel">
+                <div id="code-header">
+                    <span>C++ Implementation</span>
+                    <button id="btn-close-code" class="btn btn-secondary btn-icon" style="padding:2px 6px; font-size:10px; margin-left:auto;">✕</button>
+                </div>
+                <div id="code-scroll">
+                    <!-- Code lines injected by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Bar: Arrays on Left, Controls on Right in empty space -->
+        <div id="bottom-bar">
+            <!-- Parent & Size Arrays (Left Side) -->
+            <div id="array-panel" style="display:none;">
+                <div class="array-row">
+                    <span class="array-label">p[]</span>
+                    <div id="parent-array" class="array-cells"></div>
+                </div>
+                <div class="array-row">
+                    <span class="array-label">sz[]</span>
+                    <div id="size-array" class="array-cells"></div>
+                </div>
+            </div>
+
+            <!-- Operations & Controls (Right Side) -->
+            <div id="controls">
+                <div class="ctrl-group">
+                    <span class="ctrl-label">Nodes</span>
+                    <input type="number" id="input-n" class="input-field wide" placeholder="n" min="1" max="20" value="6">
+                    <button id="btn-init" class="btn btn-primary">Init</button>
+                </div>
+
+                <div class="ctrl-divider"></div>
+
+                <div class="ctrl-group main-op-group">
+                    <div class="node-input-wrapper">
+                        <span class="input-tag">Node A</span>
+                        <input type="number" id="input-a" class="input-field lg" placeholder="a" min="0" disabled>
+                    </div>
+                    <div class="node-input-wrapper">
+                        <span class="input-tag">Node B</span>
+                        <input type="number" id="input-b" class="input-field lg" placeholder="b" min="0" disabled>
+                    </div>
+                    <button id="btn-union" class="btn btn-warning lg" disabled>Union</button>
+                    <button id="btn-find" class="btn btn-success lg" disabled>Find</button>
+                </div>
+
+                <div class="ctrl-divider"></div>
+
+                <div class="ctrl-group">
+                    <button id="btn-undo" class="btn btn-danger" disabled title="Undo last union">↩ Undo</button>
+                    <button id="btn-redo" class="btn btn-secondary" disabled title="Redo union">↪ Redo</button>
+                </div>
+
+                <div class="ctrl-divider"></div>
+
+                <div class="ctrl-group">
+                    <button id="btn-prev" class="btn btn-secondary btn-icon" disabled>◂</button>
+                    <span id="step-nav-counter" style="font-family:var(--mono);font-size:11px;color:var(--text-dim);min-width:44px;text-align:center;">—</span>
+                    <button id="btn-next" class="btn btn-secondary btn-icon" disabled>▸</button>
+                    <button id="btn-skip" class="btn btn-secondary" disabled style="font-size:11px;">Skip ⏭</button>
+                </div>
+
+                <div class="ctrl-divider"></div>
+
+                <div class="ctrl-group">
+                    <button id="btn-zoom-in" class="btn btn-secondary btn-icon" disabled>+</button>
+                    <button id="btn-zoom-out" class="btn btn-secondary btn-icon" disabled>−</button>
+                    <button id="btn-zoom-reset" class="btn btn-secondary btn-icon" disabled title="Reset view">⟲</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast container -->
+    <div id="toast-container"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
