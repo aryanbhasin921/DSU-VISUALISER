@@ -2,6 +2,10 @@
 
 An interactive, web-based visualizer for the **Disjoint Set Union (Union-Find)** data structure with **Union-by-Size** and **Recursive Path Compression**.
 
+[![Live Demo](https://img.shields.io/badge/🚀_Live_Demo-Open_Visualizer-06b6d4?style=for-the-badge)](https://aryanbhasin921.github.io/DSU-VISUALISER/)
+
+👉 **Try it Live**: [https://aryanbhasin921.github.io/DSU-VISUALISER/](https://aryanbhasin921.github.io/DSU-VISUALISER/)
+
 ![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat&logo=html5&logoColor=white) ![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=flat&logo=css3&logoColor=white) ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat&logo=javascript&logoColor=black)
 
 ---
