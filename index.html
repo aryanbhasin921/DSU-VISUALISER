@@ -8,19 +8,53 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <!-- Initializing Modal Popup -->
+    <div id="init-modal-overlay" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-icon">⊔</div>
+            <h2>Initialize DSU Nodes</h2>
+            <p>Enter the number of nodes (1 to 20) to set up your Disjoint Set Union visualization.</p>
+            <div class="modal-input-group">
+                <label for="modal-input-n">Number of Nodes (N)</label>
+                <input type="number" id="modal-input-n" class="input-field modal-input" min="1" max="20" value="6">
+            </div>
+            <div class="modal-actions">
+                <button id="btn-modal-start" class="btn btn-primary lg" style="width:100%;">Start Visualizing</button>
+            </div>
+        </div>
+    </div>
+
     <div id="app">
-        <!-- Step Description Bar -->
-        <div id="step-bar" class="idle">
-            <div id="step-description">Initialize nodes to begin visualizing DSU operations.</div>
-            <div style="display:flex; align-items:center; gap:8px;">
-                <div id="component-badge" class="component-badge" style="display:none;">
-                    <span class="comp-icon">🌐</span>
-                    <span class="comp-label">Components:</span>
-                    <strong id="comp-count-val">0</strong>
+        <!-- Top Command Window (Rectangular Card with English Commands & Controls) -->
+        <div id="step-bar-window">
+            <div id="step-bar-header">
+                <span class="cmd-window-tag">Current Step Command</span>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <div id="component-badge" class="component-badge" style="display:none;">
+                        <span class="comp-icon">🌐</span>
+                        <span class="comp-label">Components:</span>
+                        <strong id="comp-count-val">0</strong>
+                    </div>
+                    <button id="btn-toggle-history" class="btn btn-secondary" title="Toggle Components History">📊 History</button>
+                    <button id="btn-toggle-code" class="btn btn-secondary" title="Toggle Code Panel">💻 Code</button>
                 </div>
-                <button id="btn-toggle-history" class="btn btn-secondary" title="Toggle Components History">📊 History</button>
-                <button id="btn-toggle-code" class="btn btn-secondary" title="Toggle Code Panel">💻 Code</button>
-                <div id="step-counter" style="display:none;"></div>
+            </div>
+
+            <!-- English Command Description -->
+            <div id="step-description">Initialize nodes to begin visualizing DSU operations.</div>
+
+            <!-- Step Navigation & Auto-Play Controls inside the same command window -->
+            <div id="step-window-controls">
+                <div class="step-nav-group">
+                    <button id="btn-prev" class="btn btn-secondary" disabled>◂ Prev</button>
+                    <button id="btn-play-pause" class="btn btn-warning" disabled title="Auto-play 1 step every 1s">⏸ Pause</button>
+                    <button id="btn-next" class="btn btn-secondary" disabled>Next ▸</button>
+                    <button id="btn-skip" class="btn btn-secondary" disabled style="font-size:11px;">Skip ⏭</button>
+                </div>
+                <div id="step-counter-badge" class="step-count-badge">
+                    <span id="step-nav-counter">—</span>
+                    <span id="step-counter" style="display:none;"></span>
+                </div>
             </div>
         </div>
 
@@ -121,15 +155,6 @@
                 <div class="ctrl-group">
                     <button id="btn-undo" class="btn btn-danger" disabled title="Undo last union">↩ Undo</button>
                     <button id="btn-redo" class="btn btn-secondary" disabled title="Redo union">↪ Redo</button>
-                </div>
-
-                <div class="ctrl-divider"></div>
-
-                <div class="ctrl-group">
-                    <button id="btn-prev" class="btn btn-secondary btn-icon" disabled>◂</button>
-                    <span id="step-nav-counter" style="font-family:var(--mono);font-size:11px;color:var(--text-dim);min-width:44px;text-align:center;">—</span>
-                    <button id="btn-next" class="btn btn-secondary btn-icon" disabled>▸</button>
-                    <button id="btn-skip" class="btn btn-secondary" disabled style="font-size:11px;">Skip ⏭</button>
                 </div>
 
                 <div class="ctrl-divider"></div>

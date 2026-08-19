@@ -433,24 +433,30 @@ function computeTreeLayout(parent, size, n) {
 
     const positions = {};
 
-    // Place singletons in a circle for visual clarity
+    // Lay out singletons in a 2D rectangular matrix box shape (cols x rows)
+    const cols = Math.ceil(Math.sqrt(singletons.length));
+    const rows = singletons.length > 0 ? Math.ceil(singletons.length / cols) : 0;
+    const NODE_GAP_X = 95;
+    const NODE_GAP_Y = 85;
+
     if (singletons.length > 0) {
-        const circleR = Math.max(60, singletons.length * 28);
-        const cx = 0;
-        const cy = 0;
         for (let i = 0; i < singletons.length; i++) {
-            const angle = (2 * Math.PI * i) / singletons.length - Math.PI / 2;
+            const row = Math.floor(i / cols);
+            const col = i % cols;
+            const itemsInRow = Math.min(cols, singletons.length - row * cols);
+            const startX = -((itemsInRow - 1) * NODE_GAP_X) / 2;
+
             positions[singletons[i]] = {
-                x: cx + circleR * Math.cos(angle),
-                y: cy + circleR * Math.sin(angle),
+                x: startX + col * NODE_GAP_X,
+                y: row * NODE_GAP_Y,
             };
         }
     }
 
-    // Lay out real trees (hierarchical) below/beside the circle
+    // Lay out real trees (hierarchical) below the singleton rectangle box
     let globalX = -((treeroots.length - 1) * CFG.TREE_GAP) / 2;
     const treeYOffset = singletons.length > 0
-        ? Math.max(60, singletons.length * 28) + CFG.LEVEL_H + 30
+        ? (rows * NODE_GAP_Y) + 60
         : 0;
 
     function layoutSubtree(node, depth) {
@@ -476,10 +482,7 @@ function computeTreeLayout(parent, size, n) {
         globalX += CFG.TREE_GAP;
     }
 
-    // If ALL nodes are in trees (no singletons), center them
-    // If mix, the trees are already offset below the circle
-
-    return { positions, roots, children };
+    return { positions, roots, children, singletons };
 }
 
 // ================================================================
@@ -503,7 +506,7 @@ class Renderer {
         if (n === 0) return {};
 
         const layout = computeTreeLayout(parent, size, n);
-        const { positions, roots, children } = layout;
+        const { positions, roots, children, singletons } = layout;
 
         // Find bounds for centering
         let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
@@ -518,6 +521,33 @@ class Renderer {
         const svgRect = this.svg.getBoundingClientRect();
         const offsetX = (svgRect.width / 2) - (treeW / 2) - minX;
         const offsetY = (svgRect.height / 2) - (treeH / 2) - minY;
+
+        // Draw clean rectangular box around initialized singletons if present
+        if (singletons && singletons.length > 0) {
+            let sMinX = Infinity, sMaxX = -Infinity, sMinY = Infinity, sMaxY = -Infinity;
+            for (const s of singletons) {
+                const pos = positions[s];
+                if (pos.x < sMinX) sMinX = pos.x;
+                if (pos.x > sMaxX) sMaxX = pos.x;
+                if (pos.y < sMinY) sMinY = pos.y;
+                if (pos.y > sMaxY) sMaxY = pos.y;
+            }
+            const boxPadX = 45;
+            const boxPadY = 36;
+            const boxX = sMinX + offsetX - boxPadX;
+            const boxY = sMinY + offsetY - boxPadY;
+            const boxW = (sMaxX - sMinX) + boxPadX * 2;
+            const boxH = (sMaxY - sMinY) + boxPadY * 2;
+
+            const boxRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            boxRect.setAttribute('x', boxX);
+            boxRect.setAttribute('y', boxY);
+            boxRect.setAttribute('width', Math.max(120, boxW));
+            boxRect.setAttribute('height', Math.max(80, boxH));
+            boxRect.setAttribute('class', 'singleton-box');
+            boxRect.setAttribute('rx', '12');
+            this.edgesGroup.appendChild(boxRect);
+        }
 
         // Highlighted edges set for quick lookup
         const hlEdgeSet = new Set(highlightEdges.map(e => `${e[0]}-${e[1]}`));
@@ -827,6 +857,13 @@ class App {
         this.componentBadge = document.getElementById('component-badge');
         this.compCountVal = document.getElementById('comp-count-val');
 
+        // Modal Popup DOM refs
+        this.initModalOverlay = document.getElementById('init-modal-overlay');
+        this.modalInputN = document.getElementById('modal-input-n');
+        this.btnModalStart = document.getElementById('btn-modal-start');
+
+        this.btnPlayPause = document.getElementById('btn-play-pause');
+
         this.inputN = document.getElementById('input-n');
         this.inputA = document.getElementById('input-a');
         this.inputB = document.getElementById('input-b');
@@ -874,6 +911,8 @@ class App {
         this.steps = null;
         this.currentStep = -1;
         this.isPlaying = false;
+        this.autoPlayTimer = null;
+        this.isAutoPlaying = false;
         this.operationChanged = false;
 
         this.hoveredNode = -1;
@@ -882,14 +921,37 @@ class App {
         this._buildCodePanel();
 
         // Bind events
-        this.btnInit.addEventListener('click', () => this.init());
+        if (this.btnModalStart) {
+            this.btnModalStart.addEventListener('click', () => {
+                const nVal = parseInt(this.modalInputN.value);
+                if (!isNaN(nVal) && nVal >= 1 && nVal <= 20) {
+                    this.inputN.value = nVal;
+                }
+                this.closeInitModal();
+                this.init();
+            });
+        }
+
+        this.btnInit.addEventListener('click', () => this.openInitModal());
         this.btnUnion.addEventListener('click', () => this.startUnion());
         this.btnFind.addEventListener('click', () => this.startFind());
         this.btnUndo.addEventListener('click', () => this.undo());
         this.btnRedo.addEventListener('click', () => this.redo());
-        this.btnPrev.addEventListener('click', () => this.prevStep());
-        this.btnNext.addEventListener('click', () => this.nextStep());
-        this.btnSkip.addEventListener('click', () => this.skipToEnd());
+        this.btnPrev.addEventListener('click', () => {
+            this._stopAutoPlay();
+            this.prevStep();
+        });
+        this.btnNext.addEventListener('click', () => {
+            this._stopAutoPlay();
+            this.nextStep();
+        });
+        this.btnSkip.addEventListener('click', () => {
+            this._stopAutoPlay();
+            this.skipToEnd();
+        });
+        if (this.btnPlayPause) {
+            this.btnPlayPause.addEventListener('click', () => this._toggleAutoPlay());
+        }
         this.btnZoomIn.addEventListener('click', () => this.panZoom.zoomIn());
         this.btnZoomOut.addEventListener('click', () => this.panZoom.zoomOut());
         this.btnZoomReset.addEventListener('click', () => this.panZoom.reset());
@@ -1083,6 +1145,62 @@ class App {
         if (sCells[i]) sCells[i].classList.remove('highlighted');
     }
 
+    openInitModal() {
+        if (this.initModalOverlay) {
+            this.initModalOverlay.classList.remove('hidden');
+            if (this.modalInputN) {
+                this.modalInputN.value = this.inputN ? this.inputN.value || 6 : 6;
+                this.modalInputN.focus();
+                this.modalInputN.select();
+            }
+        }
+    }
+
+    closeInitModal() {
+        if (this.initModalOverlay) {
+            this.initModalOverlay.classList.add('hidden');
+        }
+    }
+
+    _startAutoPlay() {
+        this._stopAutoPlay();
+        this.isAutoPlaying = true;
+        if (this.btnPlayPause) {
+            this.btnPlayPause.textContent = '⏸ Pause';
+            this.btnPlayPause.className = 'btn btn-warning';
+        }
+        this.autoPlayTimer = setInterval(() => {
+            if (this.steps && this.currentStep < this.steps.length - 1) {
+                this.nextStep();
+            } else {
+                // Reached final step: pause on the last step so user can inspect final state.
+                // Do NOT automatically exit — only exit when user clicks Next ▸ after the last step!
+                this._stopAutoPlay();
+            }
+        }, 1000);
+    }
+
+    _stopAutoPlay() {
+        if (this.autoPlayTimer) {
+            clearInterval(this.autoPlayTimer);
+            this.autoPlayTimer = null;
+        }
+        this.isAutoPlaying = false;
+        if (this.btnPlayPause) {
+            this.btnPlayPause.textContent = '▶ Play';
+            this.btnPlayPause.className = 'btn btn-secondary';
+        }
+    }
+
+    _toggleAutoPlay() {
+        if (!this.steps) return;
+        if (this.isAutoPlaying) {
+            this._stopAutoPlay();
+        } else {
+            this._startAutoPlay();
+        }
+    }
+
     _setStepUI(active) {
         this.isPlaying = active;
         this.btnUnion.disabled = active || !this.dsu;
@@ -1096,8 +1214,8 @@ class App {
         this.btnPrev.disabled = !active;
         this.btnNext.disabled = !active;
         this.btnSkip.disabled = !active;
+        if (this.btnPlayPause) this.btnPlayPause.disabled = !active;
         this.stepCounter.style.display = active ? '' : 'none';
-        this.stepBar.classList.toggle('idle', !active);
     }
 
     _renderStep(idx) {
@@ -1138,6 +1256,8 @@ class App {
             showToast('Enter a valid number of nodes (1–20)', 'error');
             return;
         }
+
+        this._stopAutoPlay();
 
         // Reset
         this.dsu = new DSU(n);
@@ -1201,6 +1321,7 @@ class App {
 
         this._setStepUI(true);
         this._renderStep(0);
+        this._startAutoPlay();
     }
 
     startFind() {
@@ -1219,6 +1340,7 @@ class App {
 
         this._setStepUI(true);
         this._renderStep(0);
+        this._startAutoPlay();
     }
 
     _validateInput(a, b) {
@@ -1258,6 +1380,7 @@ class App {
     }
 
     _commitOperation() {
+        this._stopAutoPlay();
         if (this.operationChanged && this._finalDsu) {
             // Push current state to history for Undo
             this.history.push({
@@ -1376,3 +1499,4 @@ class App {
 // Initialize
 // ================================================================
 const app = new App();
+app.openInitModal();
