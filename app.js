@@ -830,6 +830,7 @@ class PanZoom {
 // Toast Notifications
 // ================================================================
 function showToast(message, type = 'info', duration = 3000) {
+    if (type === 'success' || type === 'info') return; // Disable green and blue non-error toast popups
     const container = document.getElementById('toast-container');
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
@@ -869,6 +870,7 @@ class App {
         this.inputB = document.getElementById('input-b');
 
         this.btnInit = document.getElementById('btn-init');
+        this.btnAddNode = document.getElementById('btn-add-node');
         this.btnUnion = document.getElementById('btn-union');
         this.btnFind = document.getElementById('btn-find');
         this.btnUndo = document.getElementById('btn-undo');
@@ -933,6 +935,9 @@ class App {
         }
 
         this.btnInit.addEventListener('click', () => this.openInitModal());
+        if (this.btnAddNode) {
+            this.btnAddNode.addEventListener('click', () => this.addNode());
+        }
         this.btnUnion.addEventListener('click', () => this.startUnion());
         this.btnFind.addEventListener('click', () => this.startFind());
         this.btnUndo.addEventListener('click', () => this.undo());
@@ -1208,6 +1213,7 @@ class App {
         this.btnUndo.disabled = active || this.history.length === 0;
         this.btnRedo.disabled = active || this.redoStack.length === 0;
         this.btnInit.disabled = active;
+        if (this.btnAddNode) this.btnAddNode.disabled = active || !this.dsu;
         this.inputA.disabled = active || !this.dsu;
         this.inputB.disabled = active || !this.dsu;
         this.inputN.disabled = active;
@@ -1274,8 +1280,8 @@ class App {
         // Update max for inputs
         this.inputA.max = n - 1;
         this.inputB.max = n - 1;
-        this.inputA.value = '';
-        this.inputB.value = '';
+        this.inputA.value = '0';
+        this.inputB.value = '1';
 
         // Show arrays & live badge
         this.arrayPanel.style.display = '';
@@ -1304,8 +1310,10 @@ class App {
     }
 
     startUnion() {
-        const a = parseInt(this.inputA.value);
-        const b = parseInt(this.inputB.value);
+        let a = parseInt(this.inputA.value);
+        let b = parseInt(this.inputB.value);
+        if (isNaN(a)) { a = 0; this.inputA.value = 0; }
+        if (isNaN(b)) { b = 1; this.inputB.value = 1; }
         if (!this._validateInput(a, b)) return;
 
         // Clone DSU for step generation (steps will mutate the clone)
@@ -1436,6 +1444,10 @@ class App {
         const prev = this.history.pop();
         this.dsu.parent = prev.parent;
         this.dsu.size = prev.size;
+        this.dsu.n = prev.parent.length;
+        this.inputN.value = this.dsu.n;
+        this.inputA.max = this.dsu.n - 1;
+        this.inputB.max = this.dsu.n - 1;
         this.opHistory = prev.opHistorySnap ? [...prev.opHistorySnap] : [];
 
         // Clear any step playback
@@ -1472,6 +1484,10 @@ class App {
         const next = this.redoStack.pop();
         this.dsu.parent = next.parent;
         this.dsu.size = next.size;
+        this.dsu.n = next.parent.length;
+        this.inputN.value = this.dsu.n;
+        this.inputA.max = this.dsu.n - 1;
+        this.inputB.max = this.dsu.n - 1;
         this.opHistory = next.opHistorySnap ? [...next.opHistorySnap] : [];
 
         // Clear any step playback
@@ -1493,10 +1509,51 @@ class App {
 
         showToast('Union redone', 'success');
     }
+
+    addNode() {
+        if (!this.dsu) return;
+        if (this.dsu.n >= 20) {
+            showToast('Maximum of 20 nodes allowed', 'error');
+            return;
+        }
+
+        // Push current state to undo history
+        this.history.push({
+            parent: [...this.dsu.parent],
+            size: [...this.dsu.size],
+            opHistorySnap: [...this.opHistory],
+        });
+        this.redoStack = [];
+
+        // Add node
+        const newIdx = this.dsu.n;
+        this.dsu.parent.push(newIdx);
+        this.dsu.size.push(1);
+        this.dsu.n++;
+
+        // Update inputs
+        this.inputN.value = this.dsu.n;
+        this.inputA.max = this.dsu.n - 1;
+        this.inputB.max = this.dsu.n - 1;
+
+        // Record operation history
+        this._recordHistory('Add Node', `${newIdx}`, this.dsu.parent);
+
+        // Re-render and build arrays
+        this._buildArrays();
+        this._updateComponentBadge(this.dsu.parent);
+        this.renderer.render(this.dsu.parent, this.dsu.size, this.dsu.n);
+
+        this.stepDesc.innerHTML = `Added new node <span class="node-ref">${newIdx}</span>. It is its own parent, size = 1.`;
+
+        // Update Undo/Redo button states
+        this.btnUndo.disabled = false;
+        this.btnRedo.disabled = true;
+
+        showToast(`Node ${newIdx} added successfully`, 'success');
+    }
 }
 
-// ================================================================
 // Initialize
-// ================================================================
 const app = new App();
-app.openInitModal();
+app.init();
