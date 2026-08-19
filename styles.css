@@ -152,34 +152,6 @@ body {
     border-radius: 8px;
 }
 
-.modal-select {
-    width: 100%;
-    height: 42px;
-    font-size: 14px;
-    font-weight: 600;
-    background: var(--bg);
-    border-color: var(--border-light);
-    border-radius: 8px;
-    color: var(--accent-light);
-    padding: 0 12px;
-    outline: none;
-    cursor: pointer;
-}
-
-.mode-select {
-    width: 72px;
-    height: 28px;
-    font-size: 12px;
-    font-weight: 600;
-    background: var(--bg);
-    border-color: var(--border-light);
-    border-radius: 5px;
-    color: var(--accent-light);
-    padding: 0 4px;
-    outline: none;
-    cursor: pointer;
-}
-
 /* ===== RECTANGULAR STEP COMMAND WINDOW ===== */
 #step-bar-window {
     background: rgba(17, 24, 39, 0.92);

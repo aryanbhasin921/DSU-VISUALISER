@@ -18,13 +18,6 @@
                 <label for="modal-input-n">Number of Nodes (N)</label>
                 <input type="number" id="modal-input-n" class="input-field modal-input" min="1" max="20" value="6">
             </div>
-            <div class="modal-input-group">
-                <label for="modal-select-mode">Union Strategy</label>
-                <select id="modal-select-mode" class="input-field modal-select">
-                    <option value="size" selected>Union by Size (sz[])</option>
-                    <option value="rank">Union by Rank (rk[])</option>
-                </select>
-            </div>
             <div class="modal-actions">
                 <button id="btn-modal-start" class="btn btn-primary lg" style="width:100%;">Start Visualizing</button>
             </div>
@@ -122,14 +115,14 @@
 
         <!-- Bottom Bar: Arrays on Left, Controls on Right in empty space -->
         <div id="bottom-bar">
-            <!-- Parent & Size/Rank Arrays (Left Side) -->
+            <!-- Parent & Size Arrays (Left Side) -->
             <div id="array-panel" style="display:none;">
                 <div class="array-row">
                     <span class="array-label">p[]</span>
                     <div id="parent-array" class="array-cells"></div>
                 </div>
                 <div class="array-row">
-                    <span id="second-array-label" class="array-label">sz[]</span>
+                    <span class="array-label">sz[]</span>
                     <div id="size-array" class="array-cells"></div>
                 </div>
             </div>
@@ -139,13 +132,6 @@
                 <div class="ctrl-group">
                     <span class="ctrl-label">Nodes</span>
                     <input type="number" id="input-n" class="input-field wide" placeholder="n" min="1" max="20" value="6">
-                </div>
-                <div class="ctrl-group">
-                    <span class="ctrl-label">Strategy</span>
-                    <select id="select-mode" class="input-field mode-select">
-                        <option value="size" selected>Size</option>
-                        <option value="rank">Rank</option>
-                    </select>
                     <button id="btn-init" class="btn btn-primary">Init</button>
                 </div>
 
