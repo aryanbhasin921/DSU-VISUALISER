@@ -2,8 +2,8 @@
 // DSU VISUALIZER — Complete Application Logic
 // ================================================================
 
-// ---- C++ Code Definition (each line with syntax-highlighted HTML) ----
-const CPP_LINES = [
+// ---- C++ Code Definitions (Union by Size & Union by Rank) ----
+const CPP_LINES_SIZE = [
     { html: '<span class="typ">int</span> p[N], sz[N];', id: 'decl' },
     { html: '', id: 'blank1' },
     { html: '<span class="kw">void</span> <span class="fn">init</span>(<span class="typ">int</span> n) {', id: 'init-sig' },
@@ -19,7 +19,7 @@ const CPP_LINES = [
     { html: '    <span class="kw">return</span> p[x] = <span class="fn">find</span>(p[x]);', id: 'find-compress' },
     { html: '}', id: 'find-end' },
     { html: '', id: 'blank3' },
-    { html: '<span class="kw">void</span> <span class="fn">union</span>(<span class="typ">int</span> a, <span class="typ">int</span> b) {', id: 'unite-sig' },
+    { html: '<span class="kw">void</span> <span class="fn">unionBySize</span>(<span class="typ">int</span> a, <span class="typ">int</span> b) {', id: 'unite-sig' },
     { html: '    a = <span class="fn">find</span>(a);', id: 'unite-finda' },
     { html: '    b = <span class="fn">find</span>(b);', id: 'unite-findb' },
     { html: '    <span class="kw">if</span> (a == b) <span class="kw">return</span>;', id: 'unite-same' },
@@ -33,6 +33,43 @@ const CPP_LINES = [
     { html: '    <span class="kw">return</span> <span class="fn">find</span>(a) == <span class="fn">find</span>(b);', id: 'conn-return' },
     { html: '}', id: 'conn-end' },
 ];
+
+const CPP_LINES_RANK = [
+    { html: '<span class="typ">int</span> p[N], rk[N];', id: 'decl' },
+    { html: '', id: 'blank1' },
+    { html: '<span class="kw">void</span> <span class="fn">init</span>(<span class="typ">int</span> n) {', id: 'init-sig' },
+    { html: '    <span class="kw">for</span> (<span class="typ">int</span> i = <span class="num">0</span>; i &lt; n; i++) {', id: 'init-loop' },
+    { html: '        p[i] = i;', id: 'init-parent' },
+    { html: '        rk[i] = <span class="num">0</span>;', id: 'init-size' },
+    { html: '    }', id: 'init-loop-end' },
+    { html: '}', id: 'init-end' },
+    { html: '', id: 'blank2' },
+    { html: '<span class="typ">int</span> <span class="fn">find</span>(<span class="typ">int</span> x) {', id: 'find-sig' },
+    { html: '    <span class="kw">if</span> (p[x] == x)', id: 'find-base' },
+    { html: '        <span class="kw">return</span> x;', id: 'find-baseret' },
+    { html: '    <span class="kw">return</span> p[x] = <span class="fn">find</span>(p[x]);', id: 'find-compress' },
+    { html: '}', id: 'find-end' },
+    { html: '', id: 'blank3' },
+    { html: '<span class="kw">void</span> <span class="fn">unionByRank</span>(<span class="typ">int</span> a, <span class="typ">int</span> b) {', id: 'unite-sig' },
+    { html: '    a = <span class="fn">find</span>(a);', id: 'unite-finda' },
+    { html: '    b = <span class="fn">find</span>(b);', id: 'unite-findb' },
+    { html: '    <span class="kw">if</span> (a == b) <span class="kw">return</span>;', id: 'unite-same' },
+    { html: '    <span class="kw">if</span> (rk[a] &lt; rk[b]) {', id: 'unite-cmp' },
+    { html: '        p[a] = b;', id: 'unite-attach-a-b' },
+    { html: '    } <span class="kw">else if</span> (rk[b] &lt; rk[a]) {', id: 'unite-cmp-b' },
+    { html: '        p[b] = a;', id: 'unite-attach-b-a' },
+    { html: '    } <span class="kw">else</span> {', id: 'unite-cmp-eq' },
+    { html: '        p[b] = a;', id: 'unite-attach' },
+    { html: '        rk[a]++;', id: 'unite-size' },
+    { html: '    }', id: 'unite-end-if' },
+    { html: '}', id: 'unite-end' },
+    { html: '', id: 'blank4' },
+    { html: '<span class="typ">bool</span> <span class="fn">connected</span>(<span class="typ">int</span> a, <span class="typ">int</span> b) {', id: 'conn-sig' },
+    { html: '    <span class="kw">return</span> <span class="fn">find</span>(a) == <span class="fn">find</span>(b);', id: 'conn-return' },
+    { html: '}', id: 'conn-end' },
+];
+
+const CPP_LINES = CPP_LINES_SIZE;
 
 // ---- Configuration ----
 const CFG = {
@@ -77,16 +114,19 @@ function getNodeColor(i) {
 // DSU Core Data Structure
 // ================================================================
 class DSU {
-    constructor(n) {
+    constructor(n, mode = 'size') {
         this.n = n;
+        this.mode = mode; // 'size' or 'rank'
         this.parent = Array.from({ length: n }, (_, i) => i);
         this.size = new Array(n).fill(1);
+        this.rank = new Array(n).fill(0);
     }
 
     clone() {
-        const d = new DSU(this.n);
+        const d = new DSU(this.n, this.mode);
         d.parent = [...this.parent];
         d.size = [...this.size];
+        d.rank = [...this.rank];
         return d;
     }
 
@@ -100,7 +140,7 @@ class DSU {
 // Step Generator — produces micro-steps for visualization
 // ================================================================
 function generateFindPathCompressionSteps(dsu, x, steps) {
-    const snap = () => ({ parent: [...dsu.parent], size: [...dsu.size] });
+    const snap = () => ({ parent: [...dsu.parent], size: [...dsu.size], rank: [...dsu.rank] });
 
     // Build path up to root
     const path = [];
@@ -161,12 +201,14 @@ function generateFindPathCompressionSteps(dsu, x, steps) {
 
 function generateUnionSteps(dsu, a, b) {
     const steps = [];
-    const snap = () => ({ parent: [...dsu.parent], size: [...dsu.size] });
+    const snap = () => ({ parent: [...dsu.parent], size: [...dsu.size], rank: [...dsu.rank] });
     const initialParent = [...dsu.parent];
+
+    const opName = dsu.mode === 'rank' ? 'unionByRank' : 'unionBySize';
 
     // Step 0: Starting
     steps.push({
-        desc: `Calling <span class="op-name">unite</span>(<span class="node-ref">${a}</span>, <span class="node-ref">${b}</span>)`,
+        desc: `Calling <span class="op-name">${opName}</span>(<span class="node-ref">${a}</span>, <span class="node-ref">${b}</span>)`,
         codeIds: ['unite-sig'],
         nodes: { [a]: 'active', [b]: 'active' },
         edges: [],
@@ -246,58 +288,119 @@ function generateUnionSteps(dsu, a, b) {
         changedCells: { parent: [], size: [] },
     });
 
-    // Compare sizes
-    let pa = rootA, pb = rootB;
-    const szA = dsu.size[pa], szB = dsu.size[pb];
-    steps.push({
-        desc: `Comparing sizes: sz[<span class="node-ref">${pa}</span>] = ${szA}, sz[<span class="node-ref">${pb}</span>] = ${szB}`,
-        codeIds: ['unite-cmp'],
-        nodes: { [pa]: 'found', [pb]: 'found' },
-        edges: [],
-        ...snap(),
-        arrayHL: { parent: [], size: [pa, pb] },
-        changedCells: { parent: [], size: [] },
-    });
-
-    if (szA < szB) {
-        [pa, pb] = [pb, pa];
+    if (dsu.mode === 'rank') {
+        // UNION BY RANK
+        const rkA = dsu.rank[rootA], rkB = dsu.rank[rootB];
         steps.push({
-            desc: `sz[<span class="node-ref">${rootA}</span>] < sz[<span class="node-ref">${rootB}</span>] → swap so larger root is <span class="node-ref">${pa}</span>`,
-            codeIds: ['unite-swap'],
-            nodes: { [pa]: 'found', [pb]: 'active' },
+            desc: `Comparing ranks: rk[<span class="node-ref">${rootA}</span>] = ${rkA}, rk[<span class="node-ref">${rootB}</span>] = ${rkB}`,
+            codeIds: ['unite-cmp'],
+            nodes: { [rootA]: 'found', [rootB]: 'found' },
+            edges: [],
+            ...snap(),
+            arrayHL: { parent: [], size: [rootA, rootB] },
+            changedCells: { parent: [], size: [] },
+        });
+
+        if (rkA < rkB) {
+            dsu.parent[rootA] = rootB;
+            steps.push({
+                desc: `rk[<span class="node-ref">${rootA}</span>] < rk[<span class="node-ref">${rootB}</span>] (${rkA} < ${rkB}) → setting p[<span class="node-ref">${rootA}</span>] = <span class="node-ref">${rootB}</span> (rank of ${rootB} stays ${rkB})`,
+                codeIds: ['unite-attach-a-b'],
+                nodes: { [rootB]: 'found', [rootA]: 'joined' },
+                edges: [[rootA, rootB]],
+                ...snap(),
+                arrayHL: { parent: [rootA], size: [] },
+                changedCells: { parent: [rootA], size: [] },
+            });
+        } else if (rkB < rkA) {
+            dsu.parent[rootB] = rootA;
+            steps.push({
+                desc: `rk[<span class="node-ref">${rootB}</span>] < rk[<span class="node-ref">${rootA}</span>] (${rkB} < ${rkA}) → setting p[<span class="node-ref">${rootB}</span>] = <span class="node-ref">${rootA}</span> (rank of ${rootA} stays ${rkA})`,
+                codeIds: ['unite-attach-b-a'],
+                nodes: { [rootA]: 'found', [rootB]: 'joined' },
+                edges: [[rootB, rootA]],
+                ...snap(),
+                arrayHL: { parent: [rootB], size: [] },
+                changedCells: { parent: [rootB], size: [] },
+            });
+        } else {
+            dsu.parent[rootB] = rootA;
+            dsu.rank[rootA]++;
+            steps.push({
+                desc: `rk[<span class="node-ref">${rootA}</span>] == rk[<span class="node-ref">${rootB}</span>] (${rkA} == ${rkB}) → setting p[<span class="node-ref">${rootB}</span>] = <span class="node-ref">${rootA}</span> and incrementing rk[<span class="node-ref">${rootA}</span>]++ to ${dsu.rank[rootA]}`,
+                codeIds: ['unite-attach', 'unite-size'],
+                nodes: { [rootA]: 'found', [rootB]: 'joined' },
+                edges: [[rootB, rootA]],
+                ...snap(),
+                arrayHL: { parent: [rootB], size: [rootA] },
+                changedCells: { parent: [rootB], size: [rootA] },
+            });
+        }
+    } else {
+        // UNION BY SIZE
+        let pa = rootA, pb = rootB;
+        const szA = dsu.size[pa], szB = dsu.size[pb];
+        steps.push({
+            desc: `Comparing sizes: sz[<span class="node-ref">${pa}</span>] = ${szA}, sz[<span class="node-ref">${pb}</span>] = ${szB}`,
+            codeIds: ['unite-cmp'],
+            nodes: { [pa]: 'found', [pb]: 'found' },
             edges: [],
             ...snap(),
             arrayHL: { parent: [], size: [pa, pb] },
             changedCells: { parent: [], size: [] },
         });
-    } else {
+
+        if (szA < szB) {
+            [pa, pb] = [pb, pa];
+            steps.push({
+                desc: `sz[<span class="node-ref">${rootA}</span>] < sz[<span class="node-ref">${rootB}</span>] → swap so larger root is <span class="node-ref">${pa}</span>`,
+                codeIds: ['unite-swap'],
+                nodes: { [pa]: 'found', [pb]: 'active' },
+                edges: [],
+                ...snap(),
+                arrayHL: { parent: [], size: [pa, pb] },
+                changedCells: { parent: [], size: [] },
+            });
+        } else {
+            steps.push({
+                desc: `sz[<span class="node-ref">${pa}</span>] ≥ sz[<span class="node-ref">${pb}</span>] → no swap needed`,
+                codeIds: ['unite-cmp'],
+                nodes: { [pa]: 'found', [pb]: 'active' },
+                edges: [],
+                ...snap(),
+                arrayHL: { parent: [], size: [pa, pb] },
+                changedCells: { parent: [], size: [] },
+            });
+        }
+
+        // Attach
+        dsu.parent[pb] = pa;
         steps.push({
-            desc: `sz[<span class="node-ref">${pa}</span>] ≥ sz[<span class="node-ref">${pb}</span>] → no swap needed`,
-            codeIds: ['unite-cmp'],
-            nodes: { [pa]: 'found', [pb]: 'active' },
+            desc: `Setting p[<span class="node-ref">${pb}</span>] = <span class="node-ref">${pa}</span> — attaching tree rooted at ${pb} under ${pa}`,
+            codeIds: ['unite-attach'],
+            nodes: { [pa]: 'found', [pb]: 'joined' },
+            edges: [[pb, pa]],
+            ...snap(),
+            arrayHL: { parent: [pb], size: [] },
+            changedCells: { parent: [pb], size: [] },
+        });
+
+        // Update size
+        dsu.size[pa] += dsu.size[pb];
+        steps.push({
+            desc: `Updating size: sz[<span class="node-ref">${pa}</span>] = ${dsu.size[pa]}`,
+            codeIds: ['unite-size'],
+            nodes: { [pa]: 'found' },
             edges: [],
             ...snap(),
-            arrayHL: { parent: [], size: [pa, pb] },
-            changedCells: { parent: [], size: [] },
+            arrayHL: { parent: [], size: [pa] },
+            changedCells: { parent: [], size: [pa] },
         });
     }
 
-    // Attach
-    dsu.parent[pb] = pa;
-    steps.push({
-        desc: `Setting p[<span class="node-ref">${pb}</span>] = <span class="node-ref">${pa}</span> — attaching tree rooted at ${pb} under ${pa}`,
-        codeIds: ['unite-attach'],
-        nodes: { [pa]: 'found', [pb]: 'joined' },
-        edges: [[pb, pa]],
-        parent: [...dsu.parent],
-        size: [...dsu.size],
-        arrayHL: { parent: [pb], size: [] },
-        changedCells: { parent: [pb], size: [] },
-    });
-
-    // Update size
-    dsu.size[pa] += dsu.size[pb];
-    steps.push({
+    const hasChanged = dsu.parent.some((p, idx) => p !== initialParent[idx]);
+    return { steps, changed: hasChanged };
+}
         desc: `Updating sz[<span class="node-ref">${pa}</span>] = ${dsu.size[pa] - dsu.size[pb]} + ${dsu.size[pb]} = <strong>${dsu.size[pa]}</strong>`,
         codeIds: ['unite-size'],
         nodes: { [pa]: 'joined', [pb]: 'joined' },
@@ -646,10 +749,11 @@ class Renderer {
             label.textContent = i;
             g.appendChild(label);
 
-            // Size badge — always shown
+            // Size / Rank badge — always shown
             const badgeX = x + CFG.NODE_R + 6;
             const badgeY = y - CFG.NODE_R + 4;
-            const badgeW = size[i] >= 10 ? 26 : 20;
+            const val = mode === 'rank' ? (rank ? rank[i] : 0) : (size ? size[i] : 1);
+            const badgeW = val >= 10 ? 26 : 20;
             const badgeH = 17;
 
             const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
@@ -670,7 +774,7 @@ class Renderer {
             badgeText.setAttribute('y', badgeY);
             badgeText.setAttribute('class', 'size-badge-text');
             if (!isRoot) badgeText.style.fill = '#94a3b8';
-            badgeText.textContent = size[i];
+            badgeText.textContent = val;
             g.appendChild(badgeText);
 
             // Hover events
@@ -706,29 +810,23 @@ class PanZoom {
         this.startTx = 0;
         this.startTy = 0;
 
-        this._onWheel = this._onWheel.bind(this);
-        this._onMouseDown = this._onMouseDown.bind(this);
-        this._onMouseMove = this._onMouseMove.bind(this);
-        this._onMouseUp = this._onMouseUp.bind(this);
-        this._onTouchStart = this._onTouchStart.bind(this);
-        this._onTouchMove = this._onTouchMove.bind(this);
-        this._onTouchEnd = this._onTouchEnd.bind(this);
-
-        container.addEventListener('wheel', this._onWheel, { passive: false });
-        container.addEventListener('mousedown', this._onMouseDown);
-        window.addEventListener('mousemove', this._onMouseMove);
-        window.addEventListener('mouseup', this._onMouseUp);
-        container.addEventListener('touchstart', this._onTouchStart, { passive: false });
-        container.addEventListener('touchmove', this._onTouchMove, { passive: false });
-        container.addEventListener('touchend', this._onTouchEnd);
-
-        this._lastPinchDist = 0;
+        this._bindEvents();
     }
 
-    _apply() {
-        this.viewport.setAttribute('transform', `translate(${this.tx}, ${this.ty}) scale(${this.scale})`);
-        this.indicator.textContent = `${Math.round(this.scale * 100)}%`;
+    _bindEvents() {
+        this.container.addEventListener('wheel', (e) => this._onWheel(e), { passive: false });
+        this.container.addEventListener('mousedown', (e) => this._onMouseDown(e));
+        window.addEventListener('mousemove', (e) => this._onMouseMove(e));
+        window.addEventListener('mouseup', () => this._onMouseUp());
+
+        // Touch support
+        this.container.addEventListener('touchstart', (e) => this._onTouchStart(e), { passive: false });
+        this.container.addEventListener('touchmove', (e) => this._onTouchMove(e), { passive: false });
+        this.container.addEventListener('touchend', () => this._onTouchEnd());
     }
+
+    zoomIn() { this._zoomAtPoint(1.2, this.container.clientWidth / 2, this.container.clientHeight / 2); }
+    zoomOut() { this._zoomAtPoint(1 / 1.2, this.container.clientWidth / 2, this.container.clientHeight / 2); }
 
     reset() {
         this.scale = 1;
@@ -737,31 +835,28 @@ class PanZoom {
         this._apply();
     }
 
-    zoomIn() {
-        this.scale = Math.min(CFG.MAX_ZOOM, this.scale * (1 + CFG.ZOOM_STEP));
-        this._apply();
+    _apply() {
+        this.viewport.setAttribute('transform', `translate(${this.tx}, ${this.ty}) scale(${this.scale})`);
+        this.indicator.textContent = `${Math.round(this.scale * 100)}%`;
     }
 
-    zoomOut() {
-        this.scale = Math.max(CFG.MIN_ZOOM, this.scale * (1 - CFG.ZOOM_STEP));
+    _zoomAtPoint(factor, mouseX, mouseY) {
+        const newScale = Math.max(CFG.MIN_ZOOM, Math.min(CFG.MAX_ZOOM, this.scale * factor));
+        const actualFactor = newScale / this.scale;
+
+        this.tx = mouseX - actualFactor * (mouseX - this.tx);
+        this.ty = mouseY - actualFactor * (mouseY - this.ty);
+        this.scale = newScale;
         this._apply();
     }
 
     _onWheel(e) {
         e.preventDefault();
         const rect = this.container.getBoundingClientRect();
-        const mx = e.clientX - rect.left;
-        const my = e.clientY - rect.top;
-
-        const oldScale = this.scale;
-        if (e.deltaY < 0) this.scale = Math.min(CFG.MAX_ZOOM, this.scale * (1 + CFG.ZOOM_STEP));
-        else this.scale = Math.max(CFG.MIN_ZOOM, this.scale * (1 - CFG.ZOOM_STEP));
-
-        // Zoom toward cursor
-        const factor = this.scale / oldScale;
-        this.tx = mx - factor * (mx - this.tx);
-        this.ty = my - factor * (my - this.ty);
-        this._apply();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        const factor = e.deltaY < 0 ? 1.1 : 0.9;
+        this._zoomAtPoint(factor, mouseX, mouseY);
     }
 
     _onMouseDown(e) {
@@ -787,17 +882,17 @@ class PanZoom {
     }
 
     _onTouchStart(e) {
-        if (e.touches.length === 2) {
-            e.preventDefault();
-            const dx = e.touches[0].clientX - e.touches[1].clientX;
-            const dy = e.touches[0].clientY - e.touches[1].clientY;
-            this._lastPinchDist = Math.sqrt(dx * dx + dy * dy);
-        } else if (e.touches.length === 1) {
+        if (e.touches.length === 1 && !e.target.closest('.node-group')) {
             this.isPanning = true;
             this.startX = e.touches[0].clientX;
             this.startY = e.touches[0].clientY;
             this.startTx = this.tx;
             this.startTy = this.ty;
+        } else if (e.touches.length === 2) {
+            this.isPanning = false;
+            const dx = e.touches[0].clientX - e.touches[1].clientX;
+            const dy = e.touches[0].clientY - e.touches[1].clientY;
+            this._lastPinchDist = Math.sqrt(dx * dx + dy * dy);
         }
     }
 
@@ -809,8 +904,7 @@ class PanZoom {
             const dist = Math.sqrt(dx * dx + dy * dy);
             if (this._lastPinchDist > 0) {
                 const factor = dist / this._lastPinchDist;
-                this.scale = Math.max(CFG.MIN_ZOOM, Math.min(CFG.MAX_ZOOM, this.scale * factor));
-                this._apply();
+                this._zoomAtPoint(factor, (e.touches[0].clientX + e.touches[1].clientX) / 2, (e.touches[0].clientY + e.touches[1].clientY) / 2);
             }
             this._lastPinchDist = dist;
         } else if (e.touches.length === 1 && this.isPanning) {
@@ -851,7 +945,7 @@ class App {
         // DOM refs
         this.stepDesc = document.getElementById('step-description');
         this.stepCounter = document.getElementById('step-counter');
-        this.stepBar = document.getElementById('step-bar');
+        this.stepBarWindow = document.getElementById('step-bar-window');
         this.stepNavCounter = document.getElementById('step-nav-counter');
 
         this.componentBadge = document.getElementById('component-badge');
@@ -860,11 +954,15 @@ class App {
         // Modal Popup DOM refs
         this.initModalOverlay = document.getElementById('init-modal-overlay');
         this.modalInputN = document.getElementById('modal-input-n');
+        this.modalSelectMode = document.getElementById('modal-select-mode');
         this.btnModalStart = document.getElementById('btn-modal-start');
 
         this.btnPlayPause = document.getElementById('btn-play-pause');
 
         this.inputN = document.getElementById('input-n');
+        this.selectMode = document.getElementById('select-mode');
+        this.secondArrayLabel = document.getElementById('second-array-label');
+
         this.inputA = document.getElementById('input-a');
         this.inputB = document.getElementById('input-b');
 
@@ -903,10 +1001,20 @@ class App {
         this.renderer = new Renderer(svg);
         this.panZoom = new PanZoom(container, viewport, indicator);
 
+        // Synchronize mode selects
+        if (this.selectMode && this.modalSelectMode) {
+            this.selectMode.addEventListener('change', () => {
+                this.modalSelectMode.value = this.selectMode.value;
+            });
+            this.modalSelectMode.addEventListener('change', () => {
+                this.selectMode.value = this.modalSelectMode.value;
+            });
+        }
+
         // State
         this.dsu = null;
-        this.history = [];   // stack of { parent, size } snapshots for Undo
-        this.redoStack = []; // stack of { parent, size } snapshots for Redo
+        this.history = [];   // stack of { parent, size, rank } snapshots for Undo
+        this.redoStack = []; // stack of { parent, size, rank } snapshots for Redo
         this.opHistory = []; // operation history for Components table
         this.steps = null;
         this.currentStep = -1;
@@ -918,7 +1026,7 @@ class App {
         this.hoveredNode = -1;
 
         // Build code panel
-        this._buildCodePanel();
+        this._buildCodePanel('size');
 
         // Bind events
         if (this.btnModalStart) {
@@ -926,6 +1034,9 @@ class App {
                 const nVal = parseInt(this.modalInputN.value);
                 if (!isNaN(nVal) && nVal >= 1 && nVal <= 20) {
                     this.inputN.value = nVal;
+                }
+                if (this.modalSelectMode && this.selectMode) {
+                    this.selectMode.value = this.modalSelectMode.value;
                 }
                 this.closeInitModal();
                 this.init();
@@ -1023,10 +1134,11 @@ class App {
         if (scroll) scroll.scrollTop = scroll.scrollHeight;
     }
 
-    _buildCodePanel() {
+    _buildCodePanel(mode = 'size') {
         const scroll = document.getElementById('code-scroll');
         scroll.innerHTML = '';
-        CPP_LINES.forEach((line, idx) => {
+        const lines = mode === 'rank' ? CPP_LINES_RANK : CPP_LINES_SIZE;
+        lines.forEach((line, idx) => {
             const div = document.createElement('div');
             div.className = 'code-line';
             div.setAttribute('data-code-id', line.id);
@@ -1056,6 +1168,10 @@ class App {
         this.parentArrayEl.innerHTML = '';
         this.sizeArrayEl.innerHTML = '';
 
+        if (this.secondArrayLabel) {
+            this.secondArrayLabel.textContent = this.dsu.mode === 'rank' ? 'rk[]' : 'sz[]';
+        }
+
         for (let i = 0; i < this.dsu.n; i++) {
             // Parent cell
             const pCell = document.createElement('div');
@@ -1066,23 +1182,25 @@ class App {
             pCell.addEventListener('mouseleave', () => this._onArrayLeave(i));
             this.parentArrayEl.appendChild(pCell);
 
-            // Size cell
+            // Size / Rank cell
+            const secVal = this.dsu.mode === 'rank' ? this.dsu.rank[i] : this.dsu.size[i];
             const sCell = document.createElement('div');
             sCell.className = 'array-cell';
-            sCell.innerHTML = `<span class="array-index">${i}</span><span class="array-value" id="sz-val-${i}">${this.dsu.size[i]}</span>`;
+            sCell.innerHTML = `<span class="array-index">${i}</span><span class="array-value" id="sz-val-${i}">${secVal}</span>`;
             sCell.addEventListener('mouseenter', () => this._onArrayHover(i));
             sCell.addEventListener('mouseleave', () => this._onArrayLeave(i));
             this.sizeArrayEl.appendChild(sCell);
         }
     }
 
-    _updateArrays(parent, size, highlightCells = null, changedCells = null) {
+    _updateArrays(parent, secondaryArr, highlightCells = null, changedCells = null) {
         if (!this.dsu) return;
+        const arr = secondaryArr || (this.dsu.mode === 'rank' ? this.dsu.rank : this.dsu.size);
         for (let i = 0; i < this.dsu.n; i++) {
             const pVal = document.getElementById(`p-val-${i}`);
             const szVal = document.getElementById(`sz-val-${i}`);
             if (pVal) pVal.textContent = parent[i];
-            if (szVal) szVal.textContent = size[i];
+            if (szVal && arr) szVal.textContent = arr[i];
 
             const pCell = pVal?.closest('.array-cell');
             const sCell = szVal?.closest('.array-cell');
@@ -1092,17 +1210,18 @@ class App {
             if (highlightCells) {
                 if (highlightCells.parent?.includes(i) && pCell) pCell.classList.add('active');
                 if (highlightCells.size?.includes(i) && sCell) sCell.classList.add('active');
+                if (highlightCells.rank?.includes(i) && sCell) sCell.classList.add('active');
             }
             if (changedCells) {
                 if (changedCells.parent?.includes(i) && pCell) pCell.classList.add('changed');
                 if (changedCells.size?.includes(i) && sCell) sCell.classList.add('changed');
+                if (changedCells.rank?.includes(i) && sCell) sCell.classList.add('changed');
             }
         }
     }
 
     _onNodeHover(i) {
         this.hoveredNode = i;
-        // Highlight corresponding array cell
         const pCells = this.parentArrayEl.querySelectorAll('.array-cell');
         if (pCells[i]) pCells[i].classList.add('highlighted');
         const sCells = this.sizeArrayEl.querySelectorAll('.array-cell');
@@ -1118,14 +1237,12 @@ class App {
     }
 
     _onArrayHover(i) {
-        // Highlight corresponding tree node
         const nodeEl = this.renderer.nodeElements[i];
         if (nodeEl) {
             const circle = nodeEl.querySelector('.node-circle');
             if (circle) circle.style.stroke = 'var(--accent-light)';
             if (circle) circle.style.strokeWidth = '3';
         }
-        // Also highlight the cell itself
         const pCells = this.parentArrayEl.querySelectorAll('.array-cell');
         if (pCells[i]) pCells[i].classList.add('highlighted');
         const sCells = this.sizeArrayEl.querySelectorAll('.array-cell');
@@ -1173,8 +1290,6 @@ class App {
             if (this.steps && this.currentStep < this.steps.length - 1) {
                 this.nextStep();
             } else {
-                // Reached final step: pause on the last step so user can inspect final state.
-                // Do NOT automatically exit — only exit when user clicks Next ▸ after the last step!
                 this._stopAutoPlay();
             }
         }, 1000);
@@ -1211,6 +1326,7 @@ class App {
         this.inputA.disabled = active || !this.dsu;
         this.inputB.disabled = active || !this.dsu;
         this.inputN.disabled = active;
+        if (this.selectMode) this.selectMode.disabled = active;
         this.btnPrev.disabled = !active;
         this.btnNext.disabled = !active;
         this.btnSkip.disabled = !active;
@@ -1223,27 +1339,22 @@ class App {
         const step = this.steps[idx];
         this.currentStep = idx;
 
-        // Update step bar
         this.stepDesc.innerHTML = step.desc;
         this.stepCounter.textContent = `${idx + 1} / ${this.steps.length}`;
         this.stepNavCounter.textContent = `${idx + 1} / ${this.steps.length}`;
 
-        // Update navigation buttons: keep Next enabled even on last step so clicking Next automatically finishes!
         this.btnPrev.disabled = idx === 0;
         this.btnNext.disabled = false;
 
-        // Render tree with step's state
-        this.renderer.render(step.parent, step.size, this.dsu.n, step.nodes, step.edges);
+        const secondaryArr = this.dsu.mode === 'rank' ? step.rank : step.size;
+        this.renderer.render(step.parent, step.size, step.rank, this.dsu.n, this.dsu.mode, step.nodes, step.edges);
 
-        // Highlight code
         const isFind = step.codeIds?.some(id => id.startsWith('find-') || id.startsWith('conn-'));
         this._highlightCode(step.codeIds, isFind ? 'find' : 'highlighted');
 
-        // Update arrays & live component count
-        this._updateArrays(step.parent, step.size, step.arrayHL, step.changedCells);
+        this._updateArrays(step.parent, secondaryArr, step.arrayHL, step.changedCells);
         this._updateComponentBadge(step.parent);
 
-        // Re-attach hover handlers
         this.renderer.onNodeHover = (i) => this._onNodeHover(i);
         this.renderer.onNodeLeave = (i) => this._onNodeLeave(i);
     }
@@ -1252,6 +1363,7 @@ class App {
 
     init() {
         const n = parseInt(this.inputN.value);
+        const mode = this.selectMode ? this.selectMode.value : 'size';
         if (isNaN(n) || n < 1 || n > 20) {
             showToast('Enter a valid number of nodes (1–20)', 'error');
             return;
@@ -1260,13 +1372,16 @@ class App {
         this._stopAutoPlay();
 
         // Reset
-        this.dsu = new DSU(n);
+        this.dsu = new DSU(n, mode);
         this.history = [];
         this.redoStack = [];
         this.opHistory = [];
         this.steps = null;
         this.currentStep = -1;
         this.operationChanged = false;
+
+        // Rebuild code panel for selected mode
+        this._buildCodePanel(mode);
 
         // Record Initial state in History table
         this._recordHistory('Init', `${n}`, this.dsu.parent);
@@ -1292,15 +1407,16 @@ class App {
         this.btnZoomReset.disabled = false;
 
         // Render initial tree
-        this.renderer.render(this.dsu.parent, this.dsu.size, this.dsu.n);
+        this.renderer.render(this.dsu.parent, this.dsu.size, this.dsu.rank, this.dsu.n, mode);
 
         // Highlight init code
         this._highlightCode(['init-sig', 'init-loop', 'init-parent', 'init-size']);
 
-        this.stepDesc.innerHTML = `Initialized <span class="node-ref">${n}</span> nodes (0 to ${n - 1}). Each node is its own parent, size = 1.`;
+        const paramStr = mode === 'rank' ? 'rank = 0' : 'size = 1';
+        this.stepDesc.innerHTML = `Initialized <span class="node-ref">${n}</span> nodes (0 to ${n - 1}) using <strong>Union by ${mode === 'rank' ? 'Rank' : 'Size'}</strong>. Each node is its own parent, ${paramStr}.`;
 
         this.panZoom.reset();
-        showToast(`DSU initialized with ${n} nodes`, 'success');
+        showToast(`DSU initialized with ${n} nodes (Union by ${mode.toUpperCase()})`, 'success');
     }
 
     startUnion() {
@@ -1308,14 +1424,12 @@ class App {
         const b = parseInt(this.inputB.value);
         if (!this._validateInput(a, b)) return;
 
-        // Clone DSU for step generation (steps will mutate the clone)
         const dsuClone = this.dsu.clone();
         const result = generateUnionSteps(dsuClone, a, b);
 
         this.steps = result.steps;
         this.operationChanged = result.changed;
         this._currentOpInfo = { name: 'Union', detail: `${a}, ${b}` };
-        // Save the final DSU state after the operation
         this._finalDsu = dsuClone;
         this.currentStep = -1;
 
@@ -1360,7 +1474,6 @@ class App {
         if (this.currentStep < this.steps.length - 1) {
             this._renderStep(this.currentStep + 1);
         } else {
-            // At or past last step — automatically complete / skip operation!
             this._commitOperation();
         }
     }
@@ -1375,25 +1488,23 @@ class App {
     skipToEnd() {
         if (!this.steps) return;
         this._renderStep(this.steps.length - 1);
-        // Auto-commit after a short pause
         setTimeout(() => this._commitOperation(), 400);
     }
 
     _commitOperation() {
         this._stopAutoPlay();
         if (this.operationChanged && this._finalDsu) {
-            // Push current state to history for Undo
             this.history.push({
                 parent: [...this.dsu.parent],
                 size: [...this.dsu.size],
+                rank: [...this.dsu.rank],
                 opHistorySnap: [...this.opHistory],
             });
-            // Clear Redo stack on new operation
             this.redoStack = [];
 
-            // Apply final state
             this.dsu.parent = [...this._finalDsu.parent];
             this.dsu.size = [...this._finalDsu.size];
+            this.dsu.rank = [...this._finalDsu.rank];
 
             if (this._currentOpInfo) {
                 this._recordHistory(this._currentOpInfo.name, this._currentOpInfo.detail, this.dsu.parent);
@@ -1410,13 +1521,12 @@ class App {
         this._highlightCode(null);
         this.stepNavCounter.textContent = '—';
 
-        // Render current state
-        this.renderer.render(this.dsu.parent, this.dsu.size, this.dsu.n);
+        this.renderer.render(this.dsu.parent, this.dsu.size, this.dsu.rank, this.dsu.n, this.dsu.mode);
         this._buildArrays();
         this._updateComponentBadge(this.dsu.parent);
 
         this.stepDesc.innerHTML = 'Operation complete. Enter nodes for the next operation.';
-        this.stepBar.classList.add('idle');
+        this.stepBarWindow.classList.add('idle');
 
         this.btnUndo.disabled = this.history.length === 0;
         this.btnRedo.disabled = this.redoStack.length === 0;
@@ -1425,33 +1535,32 @@ class App {
     undo() {
         if (this.history.length === 0) return;
 
-        // Push current state to Redo stack
         this.redoStack.push({
             parent: [...this.dsu.parent],
             size: [...this.dsu.size],
+            rank: [...this.dsu.rank],
             opHistorySnap: [...this.opHistory],
         });
 
-        // Pop state from Undo history
         const prev = this.history.pop();
         this.dsu.parent = prev.parent;
         this.dsu.size = prev.size;
+        this.dsu.rank = prev.rank || new Array(this.dsu.n).fill(0);
         this.opHistory = prev.opHistorySnap ? [...prev.opHistorySnap] : [];
 
-        // Clear any step playback
         this.steps = null;
         this.currentStep = -1;
         this._setStepUI(false);
         this._highlightCode(null);
         this.stepNavCounter.textContent = '—';
 
-        this.renderer.render(this.dsu.parent, this.dsu.size, this.dsu.n);
+        this.renderer.render(this.dsu.parent, this.dsu.size, this.dsu.rank, this.dsu.n, this.dsu.mode);
         this._buildArrays();
         this._updateComponentBadge(this.dsu.parent);
         this._renderHistoryTable();
 
         this.stepDesc.innerHTML = 'Last union undone. State restored.';
-        this.stepBar.classList.add('idle');
+        this.stepBarWindow.classList.add('idle');
         this.btnUndo.disabled = this.history.length === 0;
         this.btnRedo.disabled = this.redoStack.length === 0;
 
@@ -1461,33 +1570,32 @@ class App {
     redo() {
         if (this.redoStack.length === 0) return;
 
-        // Push current state to Undo history
         this.history.push({
             parent: [...this.dsu.parent],
             size: [...this.dsu.size],
+            rank: [...this.dsu.rank],
             opHistorySnap: [...this.opHistory],
         });
 
-        // Pop state from Redo stack
         const next = this.redoStack.pop();
         this.dsu.parent = next.parent;
         this.dsu.size = next.size;
+        this.dsu.rank = next.rank || new Array(this.dsu.n).fill(0);
         this.opHistory = next.opHistorySnap ? [...next.opHistorySnap] : [];
 
-        // Clear any step playback
         this.steps = null;
         this.currentStep = -1;
         this._setStepUI(false);
         this._highlightCode(null);
         this.stepNavCounter.textContent = '—';
 
-        this.renderer.render(this.dsu.parent, this.dsu.size, this.dsu.n);
+        this.renderer.render(this.dsu.parent, this.dsu.size, this.dsu.rank, this.dsu.n, this.dsu.mode);
         this._buildArrays();
         this._updateComponentBadge(this.dsu.parent);
         this._renderHistoryTable();
 
         this.stepDesc.innerHTML = 'Union redone. State updated.';
-        this.stepBar.classList.add('idle');
+        this.stepBarWindow.classList.add('idle');
         this.btnUndo.disabled = this.history.length === 0;
         this.btnRedo.disabled = this.redoStack.length === 0;
 
