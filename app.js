@@ -19,7 +19,7 @@ const CPP_LINES = [
     { html: '    <span class="kw">return</span> p[x] = <span class="fn">find</span>(p[x]);', id: 'find-compress' },
     { html: '}', id: 'find-end' },
     { html: '', id: 'blank3' },
-    { html: '<span class="kw">void</span> <span class="fn">unite</span>(<span class="typ">int</span> a, <span class="typ">int</span> b) {', id: 'unite-sig' },
+    { html: '<span class="kw">void</span> <span class="fn">union</span>(<span class="typ">int</span> a, <span class="typ">int</span> b) {', id: 'unite-sig' },
     { html: '    a = <span class="fn">find</span>(a);', id: 'unite-finda' },
     { html: '    b = <span class="fn">find</span>(b);', id: 'unite-findb' },
     { html: '    <span class="kw">if</span> (a == b) <span class="kw">return</span>;', id: 'unite-same' },
