@@ -9,7 +9,7 @@
 </head>
 <body>
     <!-- Initializing Modal Popup -->
-    <div id="init-modal-overlay" class="modal-overlay">
+    <div id="init-modal-overlay" class="modal-overlay hidden">
         <div class="modal-card">
             <div class="modal-icon">⊔</div>
             <h2>Initialize DSU Nodes</h2>
@@ -20,6 +20,24 @@
             </div>
             <div class="modal-actions">
                 <button id="btn-modal-start" class="btn btn-primary lg" style="width:100%;">Start Visualizing</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Onboarding Theory Modal Popup -->
+    <div id="theory-modal-overlay" class="modal-overlay hidden">
+        <div class="modal-card" style="max-width: 460px;">
+            <div class="modal-icon">📚</div>
+            <h2>Learn Disjoint Set Union (DSU)</h2>
+            <p>Disjoint Set Union (Union-Find) is an elegant data structure used to group elements and query connections efficiently.</p>
+            <p style="font-size: 13px; color: var(--text-muted); margin-top: -6px; margin-bottom: 8px;">Select an option to proceed:</p>
+            <div style="display:flex; flex-direction: column; gap:12px; width:100%;">
+                <button id="btn-theory-start" class="btn btn-primary lg" style="width:100%;">
+                    🏫 I'm new to DSU (Start Guided Tour)
+                </button>
+                <button id="btn-theory-skip" class="btn btn-secondary lg" style="width:100%; border-color: var(--border-light);">
+                    ⚡ I already know DSU (Skip Tour)
+                </button>
             </div>
         </div>
     </div>
@@ -35,6 +53,7 @@
                         <span class="comp-label">Components:</span>
                         <strong id="comp-count-val">0</strong>
                     </div>
+                    <button id="btn-theory-guide" class="btn btn-secondary" style="background:rgba(99,102,241,0.15); color:#818cf8; border-color:rgba(99,102,241,0.3);" title="Start Guided Tour">📚 Theory & Guide</button>
                     <button id="btn-toggle-history" class="btn btn-secondary" title="Toggle Components History">📊 History</button>
                     <button id="btn-toggle-code" class="btn btn-secondary" title="Toggle Code Panel">💻 Code</button>
                 </div>
@@ -78,6 +97,29 @@
                     <p>Enter the number of nodes and click <strong>Init</strong> to start.</p>
                 </div>
                 <div id="zoom-indicator">100%</div>
+
+                <!-- Guided Tour Floating Tutorial Card -->
+                <div id="tutorial-card" class="tutorial-card hidden">
+                    <div class="tutorial-header">
+                        <span class="tutorial-badge">Chapter <span id="tut-current-chapter">1</span> of 4</span>
+                        <h3 id="tut-title">The Problem</h3>
+                        <button id="btn-tut-close" class="btn-tut-close" title="Exit Tutorial">✕</button>
+                    </div>
+                    <div id="tut-content" class="tutorial-content">
+                        <!-- Educational content injected here -->
+                    </div>
+                    <div class="tutorial-footer">
+                        <button id="btn-tut-prev" class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 11px;">◂ Back</button>
+                        <button id="btn-tut-play" class="btn btn-warning btn-sm" style="padding: 4px 8px; font-size: 11px; background: #eab308; color: #0f172a; font-weight: 600; display: none;">▶ Play</button>
+                        <div class="tutorial-progress">
+                            <span class="dot active"></span>
+                            <span class="dot"></span>
+                            <span class="dot"></span>
+                            <span class="dot"></span>
+                        </div>
+                        <button id="btn-tut-next" class="btn btn-primary btn-sm" style="padding: 4px 8px; font-size: 11px;">Next ▸</button>
+                    </div>
+                </div>
             </div>
 
             <!-- History Panel (Components Column) -->

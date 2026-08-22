@@ -858,6 +858,21 @@ class App {
         this.componentBadge = document.getElementById('component-badge');
         this.compCountVal = document.getElementById('comp-count-val');
 
+        // Onboarding and Tutorial DOM refs
+        this.theoryModalOverlay = document.getElementById('theory-modal-overlay');
+        this.btnTheoryStart = document.getElementById('btn-theory-start');
+        this.btnTheorySkip = document.getElementById('btn-theory-skip');
+        this.btnTheoryGuide = document.getElementById('btn-theory-guide');
+
+        this.tutorialCard = document.getElementById('tutorial-card');
+        this.tutCurrentChapterEl = document.getElementById('tut-current-chapter');
+        this.tutTitleEl = document.getElementById('tut-title');
+        this.tutContentEl = document.getElementById('tut-content');
+        this.btnTutPrev = document.getElementById('btn-tut-prev');
+        this.btnTutNext = document.getElementById('btn-tut-next');
+        this.btnTutPlay = document.getElementById('btn-tut-play');
+        this.btnTutClose = document.getElementById('btn-tut-close');
+
         // Modal Popup DOM refs
         this.initModalOverlay = document.getElementById('init-modal-overlay');
         this.modalInputN = document.getElementById('modal-input-n');
@@ -919,6 +934,10 @@ class App {
 
         this.hoveredNode = -1;
 
+        // Tutorial State
+        this.isTutorialMode = false;
+        this.tutorialChapter = 1;
+
         // Build code panel
         this._buildCodePanel();
 
@@ -932,6 +951,38 @@ class App {
                 this.closeInitModal();
                 this.init();
             });
+        }
+
+        // Onboarding and Tutorial Event Bindings
+        if (this.btnTheoryStart) {
+            this.btnTheoryStart.addEventListener('click', () => {
+                this.closeTheoryModal();
+                this.startGuidedTour();
+            });
+        }
+        if (this.btnTheorySkip) {
+            this.btnTheorySkip.addEventListener('click', () => {
+                this.closeTheoryModal();
+            });
+        }
+        if (this.btnTheoryGuide) {
+            this.btnTheoryGuide.addEventListener('click', () => {
+                this.startGuidedTour();
+            });
+        }
+        if (this.btnTutPrev) {
+            this.btnTutPrev.addEventListener('click', () => this.prevChapter());
+        }
+        if (this.btnTutNext) {
+            this.btnTutNext.addEventListener('click', () => this.nextChapter());
+        }
+        if (this.btnTutPlay) {
+            this.btnTutPlay.addEventListener('click', () => {
+                this._toggleAutoPlay();
+            });
+        }
+        if (this.btnTutClose) {
+            this.btnTutClose.addEventListener('click', () => this.exitGuidedTour());
         }
 
         this.btnInit.addEventListener('click', () => this.openInitModal());
@@ -986,6 +1037,11 @@ class App {
         // Linked hover
         this.renderer.onNodeHover = (i) => this._onNodeHover(i);
         this.renderer.onNodeLeave = (i) => this._onNodeLeave(i);
+
+        // Open theory onboarding modal popup on startup
+        setTimeout(() => {
+            this.openTheoryModal();
+        }, 300);
     }
 
     _countComponents(parent) {
@@ -1174,12 +1230,20 @@ class App {
             this.btnPlayPause.textContent = '⏸ Pause';
             this.btnPlayPause.className = 'btn btn-warning';
         }
-        this.autoPlayTimer = setInterval(() => {
+        if (this.btnTutPlay) {
+            this.btnTutPlay.textContent = '⏸ Pause';
+            this.btnTutPlay.style.background = '#f59e0b';
+        }
+        this._runAutoPlayTimeout();
+    }
+
+    _runAutoPlayTimeout() {
+        if (!this.isAutoPlaying) return;
+        this.autoPlayTimer = setTimeout(() => {
             if (this.steps && this.currentStep < this.steps.length - 1) {
                 this.nextStep();
+                this._runAutoPlayTimeout();
             } else {
-                // Reached final step: pause on the last step so user can inspect final state.
-                // Do NOT automatically exit — only exit when user clicks Next ▸ after the last step!
                 this._stopAutoPlay();
             }
         }, 1000);
@@ -1187,13 +1251,17 @@ class App {
 
     _stopAutoPlay() {
         if (this.autoPlayTimer) {
-            clearInterval(this.autoPlayTimer);
+            clearTimeout(this.autoPlayTimer);
             this.autoPlayTimer = null;
         }
         this.isAutoPlaying = false;
         if (this.btnPlayPause) {
             this.btnPlayPause.textContent = '▶ Play';
             this.btnPlayPause.className = 'btn btn-secondary';
+        }
+        if (this.btnTutPlay) {
+            this.btnTutPlay.textContent = '▶ Play';
+            this.btnTutPlay.style.background = '#eab308';
         }
     }
 
@@ -1208,20 +1276,25 @@ class App {
 
     _setStepUI(active) {
         this.isPlaying = active;
-        this.btnUnion.disabled = active || !this.dsu;
-        this.btnFind.disabled = active || !this.dsu;
-        this.btnUndo.disabled = active || this.history.length === 0;
-        this.btnRedo.disabled = active || this.redoStack.length === 0;
-        this.btnInit.disabled = active;
-        if (this.btnAddNode) this.btnAddNode.disabled = active || !this.dsu;
-        this.inputA.disabled = active || !this.dsu;
-        this.inputB.disabled = active || !this.dsu;
-        this.inputN.disabled = active;
-        this.btnPrev.disabled = !active;
-        this.btnNext.disabled = !active;
-        this.btnSkip.disabled = !active;
-        if (this.btnPlayPause) this.btnPlayPause.disabled = !active;
-        this.stepCounter.style.display = active ? '' : 'none';
+
+        const isTut = this.isTutorialMode;
+        this.btnUnion.disabled = isTut || active || !this.dsu;
+        this.btnFind.disabled = isTut || active || !this.dsu;
+        this.btnUndo.disabled = isTut || active || this.history.length === 0;
+        this.btnRedo.disabled = isTut || active || this.redoStack.length === 0;
+        this.btnInit.disabled = isTut || active;
+        if (this.btnAddNode) this.btnAddNode.disabled = isTut || active || !this.dsu;
+        this.inputA.disabled = isTut || active || !this.dsu;
+        this.inputB.disabled = isTut || active || !this.dsu;
+        this.inputN.disabled = isTut || active;
+
+        // In tutorial mode, we completely disable the step player since diagrams are static
+        const hasSteps = !isTut && active && this.steps && this.steps.length > 0;
+        this.btnPrev.disabled = !hasSteps || this.currentStep <= 0;
+        this.btnNext.disabled = !hasSteps;
+        this.btnSkip.disabled = !hasSteps;
+        if (this.btnPlayPause) this.btnPlayPause.disabled = !hasSteps;
+        this.stepCounter.style.display = hasSteps ? '' : 'none';
     }
 
     _renderStep(idx) {
@@ -1551,6 +1624,476 @@ class App {
         this.btnRedo.disabled = true;
 
         showToast(`Node ${newIdx} added successfully`, 'success');
+    }
+
+    openTheoryModal() {
+        if (this.theoryModalOverlay) {
+            this.theoryModalOverlay.classList.remove('hidden');
+        }
+    }
+
+    closeTheoryModal() {
+        if (this.theoryModalOverlay) {
+            this.theoryModalOverlay.classList.add('hidden');
+        }
+    }
+
+    startGuidedTour() {
+        this.isTutorialMode = true;
+        this.tutorialChapter = 1;
+        if (this.tutorialCard) {
+            this.tutorialCard.classList.remove('hidden');
+        }
+        if (this.codePanel && this.codePanel.classList.contains('collapsed')) {
+            this.codePanel.classList.remove('collapsed');
+        }
+        this.loadChapter(1);
+    }
+
+    exitGuidedTour() {
+        this.isTutorialMode = false;
+        if (this.tutorialCard) {
+            this.tutorialCard.classList.add('hidden');
+        }
+        this._stopAutoPlay();
+        this.init();
+    }
+
+    nextChapter() {
+        if (!this.isTutorialMode) return;
+        this._stopAutoPlay();
+        if (this.tutorialChapter >= 4) {
+            this.exitGuidedTour();
+            showToast('Guided Tour Complete! Sandbox Mode Unlocked.', 'success');
+        } else {
+            this.loadChapter(this.tutorialChapter + 1);
+        }
+    }
+
+    prevChapter() {
+        if (!this.isTutorialMode) return;
+        this._stopAutoPlay();
+        if (this.tutorialChapter > 1) {
+            this.loadChapter(this.tutorialChapter - 1);
+        }
+    }
+
+    loadChapter(chapterNum) {
+        this.tutorialChapter = chapterNum;
+
+        // Update dot indicators
+        const dots = this.tutorialCard.querySelectorAll('.tutorial-progress .dot');
+        dots.forEach((dot, idx) => {
+            if (idx === chapterNum - 1) {
+                dot.classList.add('active');
+            } else {
+                dot.classList.remove('active');
+            }
+        });
+
+        if (this.tutCurrentChapterEl) this.tutCurrentChapterEl.textContent = chapterNum;
+
+        // Back button state
+        if (this.btnTutPrev) this.btnTutPrev.disabled = chapterNum === 1;
+        if (this.btnTutNext) {
+            this.btnTutNext.textContent = chapterNum === 4 ? 'Finish ✓' : 'Next ▸';
+        }
+        if (this.btnTutPlay) {
+            this.btnTutPlay.style.display = chapterNum === 1 ? 'none' : 'inline-block';
+            this.btnTutPlay.textContent = '▶ Play';
+            this.btnTutPlay.style.background = '#eab308';
+        }
+
+        if (chapterNum === 1) {
+            this.tutTitleEl.textContent = '1. The Problem';
+            this.tutContentEl.innerHTML = `
+                <p>DSU manages grouped items (e.g. connected nodes in a graph) and checks connection states efficiently.</p>
+                <p>Initially, we call <code>makeSet(x)</code> for each node. Each node is its own representative with a parent pointing to itself and <strong>size = 1</strong>. This takes <strong>O(1)</strong> time.</p>
+                <p>Observe the 6 singletons on the canvas. No connections exist yet.</p>
+            `;
+
+            this.dsu = new DSU(6);
+            this.history = [];
+            this.redoStack = [];
+            this.opHistory = [];
+            this.steps = null;
+            this.currentStep = -1;
+            this._setStepUI(false);
+            
+            this.btnPrev.disabled = true;
+            this.btnNext.disabled = true;
+            this.btnPlayPause.disabled = true;
+            this.btnSkip.disabled = true;
+            this.stepNavCounter.textContent = '—';
+
+            this.renderer.render(this.dsu.parent, this.dsu.size, this.dsu.n);
+            this._buildArrays();
+            this._updateComponentBadge(this.dsu.parent);
+            this._highlightCode(['init-sig', 'init-loop', 'init-parent', 'init-size']);
+            this.stepDesc.innerHTML = 'Tutorial Chapter 1: Initializing disconnected singletons.';
+        }
+        else if (chapterNum === 2) {
+            this.tutTitleEl.textContent = '2. Naive Union & Find';
+            this.tutContentEl.innerHTML = `
+                <p>To join groups, we point one root to another. But naively linking nodes can create a long degenerate chain.</p>
+                <p>Click the <strong>▶ Play</strong> button below to see a chain of <strong>5 → 4 → 3 → 2 → 1 → 0</strong> form.</p>
+                <p>Notice how finding the root of 5 (<code>Find(5)</code>) forces traversing all 6 nodes. This takes <strong>O(N)</strong> linear time, which is slow!</p>
+            `;
+
+            const steps = [];
+
+            // 1. Union(4, 5)
+            steps.push({
+                desc: 'Union(4, 5): Link root of 5 directly under root of 4.',
+                codeIds: ['unite-attach'],
+                nodes: { 4: 'found', 5: 'joined' },
+                edges: [[5, 4]],
+                parent: [0, 1, 2, 3, 4, 4],
+                size: [1, 1, 1, 1, 2, 1],
+                arrayHL: { parent: [5], size: [] },
+                changedCells: { parent: [5], size: [] },
+                isImportant: false
+            });
+
+            // 2. Union(3, 4)
+            steps.push({
+                desc: 'Union(3, 4): Link root of 4 directly under root of 3.',
+                codeIds: ['unite-attach'],
+                nodes: { 3: 'found', 4: 'joined' },
+                edges: [[5, 4], [4, 3]],
+                parent: [0, 1, 2, 3, 3, 4],
+                size: [1, 1, 1, 3, 2, 1],
+                arrayHL: { parent: [4], size: [] },
+                changedCells: { parent: [4], size: [] },
+                isImportant: false
+            });
+
+            // 3. Union(2, 3)
+            steps.push({
+                desc: 'Union(2, 3): Link root of 3 directly under root of 2.',
+                codeIds: ['unite-attach'],
+                nodes: { 2: 'found', 3: 'joined' },
+                edges: [[5, 4], [4, 3], [3, 2]],
+                parent: [0, 1, 2, 2, 3, 4],
+                size: [1, 1, 4, 3, 2, 1],
+                arrayHL: { parent: [3], size: [] },
+                changedCells: { parent: [3], size: [] },
+                isImportant: false
+            });
+
+            // 4. Union(1, 2)
+            steps.push({
+                desc: 'Union(1, 2): Link root of 2 directly under root of 1.',
+                codeIds: ['unite-attach'],
+                nodes: { 1: 'found', 2: 'joined' },
+                edges: [[5, 4], [4, 3], [3, 2], [2, 1]],
+                parent: [0, 1, 1, 2, 3, 4],
+                size: [1, 5, 4, 3, 2, 1],
+                arrayHL: { parent: [2], size: [] },
+                changedCells: { parent: [2], size: [] },
+                isImportant: false
+            });
+
+            // 5. Union(0, 1)
+            steps.push({
+                desc: 'Union(0, 1): Link root of 1 directly under root of 0. We now have a degenerate tree chain.',
+                codeIds: ['unite-attach'],
+                nodes: { 0: 'found', 1: 'joined' },
+                edges: [[5, 4], [4, 3], [3, 2], [2, 1], [1, 0]],
+                parent: [0, 0, 1, 2, 3, 4],
+                size: [6, 5, 4, 3, 2, 1],
+                arrayHL: { parent: [1], size: [] },
+                changedCells: { parent: [1], size: [] },
+                isImportant: false
+            });
+
+            // 6. Find(5) - visit 5,4,3,2,1
+            steps.push({
+                desc: 'Executing Find(5): Visit 5, 4, 3, 2, and 1 sequentially following parent pointers.',
+                codeIds: ['find-base', 'find-compress'],
+                nodes: { 5: 'active', 4: 'active', 3: 'active', 2: 'active', 1: 'active', 0: 'comparing' },
+                edges: [[5, 4], [4, 3], [3, 2], [2, 1], [1, 0]],
+                parent: [0, 0, 1, 2, 3, 4],
+                size: [6, 5, 4, 3, 2, 1],
+                arrayHL: { parent: [5, 4, 3, 2, 1], size: [] },
+                changedCells: { parent: [], size: [] },
+                isImportant: false
+            });
+
+            // 7. Reached root 0 (Important step!)
+            steps.push({
+                desc: '<strong>Find(5) completed: Root is 0.</strong> Notice that this simple lookup required traversing all 6 nodes (5 → 4 → 3 → 2 → 1 → 0). This is very slow, taking linear <strong>O(N)</strong> operations in the worst case!',
+                codeIds: ['find-baseret'],
+                nodes: { 0: 'found' },
+                edges: [[5, 4], [4, 3], [3, 2], [2, 1], [1, 0]],
+                parent: [0, 0, 1, 2, 3, 4],
+                size: [6, 5, 4, 3, 2, 1],
+                arrayHL: { parent: [0], size: [] },
+                changedCells: { parent: [], size: [] },
+                isImportant: true
+            });
+
+            this.dsu = new DSU(6);
+            this.history = [];
+            this.redoStack = [];
+            this.opHistory = [];
+            this.steps = steps;
+            this.currentStep = -1;
+
+            this._setStepUI(true);
+            this._renderStep(0);
+            this._stopAutoPlay();
+        }
+        else if (chapterNum === 3) {
+            this.tutTitleEl.textContent = '3. Union by Size';
+            this.tutContentEl.innerHTML = `
+                <p>To prevent degenerate chains, <strong>Union by Size</strong> compares the sizes of both sets before linking them.</p>
+                <p>We <strong>always attach the root of the smaller tree under the root of the larger tree</strong>.</p>
+                <p>Click <strong>▶ Play</strong> to watch a balanced DSU form. When connecting set {4,5} (size 2) and set {0,1,2,3} (size 4), we attach 5 to 1. The maximum tree depth is restricted to 2, guaranteeing <strong>O(log N)</strong> height!</p>
+            `;
+
+            const steps = [];
+
+            // 1. Union(0, 1)
+            steps.push({
+                desc: 'Union(0, 1): Link smaller element under larger (or root A under B since sizes are equal).',
+                codeIds: ['unite-attach'],
+                nodes: { 0: 'joined', 1: 'found' },
+                edges: [[0, 1]],
+                parent: [1, 1, 2, 3, 4, 5],
+                size: [1, 2, 1, 1, 1, 1],
+                arrayHL: { parent: [0], size: [1] },
+                changedCells: { parent: [0], size: [1] },
+                isImportant: false
+            });
+
+            // 2. Union(2, 3)
+            steps.push({
+                desc: 'Union(2, 3): Link root of 2 under root of 3.',
+                codeIds: ['unite-attach'],
+                nodes: { 2: 'joined', 3: 'found' },
+                edges: [[0, 1], [2, 3]],
+                parent: [1, 1, 3, 3, 4, 5],
+                size: [1, 2, 1, 2, 1, 1],
+                arrayHL: { parent: [2], size: [3] },
+                changedCells: { parent: [2], size: [3] },
+                isImportant: false
+            });
+
+            // 3. Union(4, 5)
+            steps.push({
+                desc: 'Union(4, 5): Link root of 4 under root of 5.',
+                codeIds: ['unite-attach'],
+                nodes: { 4: 'joined', 5: 'found' },
+                edges: [[0, 1], [2, 3], [4, 5]],
+                parent: [1, 1, 3, 3, 5, 5],
+                size: [1, 2, 1, 2, 1, 2],
+                arrayHL: { parent: [4], size: [5] },
+                changedCells: { parent: [4], size: [5] },
+                isImportant: false
+            });
+
+            // 4. Union(1, 3)
+            steps.push({
+                desc: 'Union(1, 3): Both roots have size 2. We attach root 3 under root 1.',
+                codeIds: ['unite-attach'],
+                nodes: { 1: 'found', 3: 'joined' },
+                edges: [[0, 1], [2, 3], [4, 5], [3, 1]],
+                parent: [1, 1, 3, 1, 5, 5],
+                size: [1, 4, 1, 2, 1, 2],
+                arrayHL: { parent: [3], size: [1] },
+                changedCells: { parent: [3], size: [1] },
+                isImportant: false
+            });
+
+            // 5. Compare Sizes of 5 and 1 (Important Step!)
+            steps.push({
+                desc: 'Compare sizes before Union(5, 1): Root 5 has size 2. Root 1 has size 4.',
+                codeIds: ['unite-cmp'],
+                nodes: { 1: 'active', 5: 'active' },
+                edges: [[0, 1], [2, 3], [4, 5], [3, 1]],
+                parent: [1, 1, 3, 1, 5, 5],
+                size: [1, 4, 1, 2, 1, 2],
+                arrayHL: { parent: [], size: [1, 5] },
+                changedCells: { parent: [], size: [] },
+                isImportant: true
+            });
+
+            // 6. Attach 5 under 1 (Important Step!)
+            steps.push({
+                desc: '<strong>Union by Size:</strong> Since size of 5 (2) is smaller than size of 1 (4), we attach root 5 under root 1. This prevents tall chains and keeps maximum tree height bounded by <strong>O(log N)</strong>!',
+                codeIds: ['unite-attach', 'unite-size'],
+                nodes: { 1: 'joined', 5: 'joined' },
+                edges: [[0, 1], [2, 3], [4, 5], [3, 1], [5, 1]],
+                parent: [1, 1, 3, 1, 5, 1],
+                size: [1, 6, 1, 2, 1, 2],
+                arrayHL: { parent: [5], size: [1] },
+                changedCells: { parent: [5], size: [1] },
+                isImportant: true
+            });
+
+            this.dsu = new DSU(6);
+            this.history = [];
+            this.redoStack = [];
+            this.opHistory = [];
+            this.steps = steps;
+            this.currentStep = -1;
+
+            this._setStepUI(true);
+            this._renderStep(0);
+            this._stopAutoPlay();
+        }
+        else if (chapterNum === 4) {
+            this.tutTitleEl.textContent = '4. Path Compression';
+            this.tutContentEl.innerHTML = `
+                <p>During a <code>Find(x)</code> query, we traverse from a node to the root. We can optimize future lookups by flattening the tree.</p>
+                <p><strong>Path Compression</strong> updates the parent of every visited node along the path to point directly to the root.</p>
+                <p>Observe the steps: We will trace <code>Find(4)</code> going up the recursion stack, and then compression setting the parent of each node directly to 0 coming down!</p>
+            `;
+
+            const steps = [];
+
+            // Step 1: Find(4)
+            steps.push({
+                desc: 'Find(4) starts: Parent of 4 is 3. Since 3 is not 3 (not root), we recursively call Find(3).',
+                codeIds: ['find-sig', 'find-base'],
+                nodes: { 4: 'active', 3: 'comparing' },
+                edges: [[4, 3], [3, 2], [2, 1], [1, 0], [5, 5]],
+                parent: [0, 0, 1, 2, 3, 5],
+                size: [5, 4, 3, 2, 1, 1],
+                arrayHL: { parent: [4, 3], size: [] },
+                changedCells: { parent: [], size: [] },
+                isImportant: true
+            });
+
+            // Step 2: Find(3)
+            steps.push({
+                desc: 'Find(3) called recursively: Parent of 3 is 2. Since 2 is not root, we call Find(2).',
+                codeIds: ['find-sig', 'find-base'],
+                nodes: { 4: 'active', 3: 'active', 2: 'comparing' },
+                edges: [[4, 3], [3, 2], [2, 1], [1, 0], [5, 5]],
+                parent: [0, 0, 1, 2, 3, 5],
+                size: [5, 4, 3, 2, 1, 1],
+                arrayHL: { parent: [3, 2], size: [] },
+                changedCells: { parent: [], size: [] },
+                isImportant: true
+            });
+
+            // Step 3: Find(2)
+            steps.push({
+                desc: 'Find(2) called recursively: Parent of 2 is 1. Since 1 is not root, we call Find(1).',
+                codeIds: ['find-sig', 'find-base'],
+                nodes: { 4: 'active', 3: 'active', 2: 'active', 1: 'comparing' },
+                edges: [[4, 3], [3, 2], [2, 1], [1, 0], [5, 5]],
+                parent: [0, 0, 1, 2, 3, 5],
+                size: [5, 4, 3, 2, 1, 1],
+                arrayHL: { parent: [2, 1], size: [] },
+                changedCells: { parent: [], size: [] },
+                isImportant: true
+            });
+
+            // Step 4: Find(1)
+            steps.push({
+                desc: 'Find(1) called recursively: Parent of 1 is 0. Since 0 is not root, we call Find(0).',
+                codeIds: ['find-sig', 'find-base'],
+                nodes: { 4: 'active', 3: 'active', 2: 'active', 1: 'active', 0: 'comparing' },
+                edges: [[4, 3], [3, 2], [2, 1], [1, 0], [5, 5]],
+                parent: [0, 0, 1, 2, 3, 5],
+                size: [5, 4, 3, 2, 1, 1],
+                arrayHL: { parent: [1, 0], size: [] },
+                changedCells: { parent: [], size: [] },
+                isImportant: true
+            });
+
+            // Step 5: Find(0) Base Case
+            steps.push({
+                desc: 'Find(0) base case reached: Since parent[0] === 0, Node 0 is the root. We return 0 up the recursion stack.',
+                codeIds: ['find-baseret'],
+                nodes: { 4: 'active', 3: 'active', 2: 'active', 1: 'active', 0: 'found' },
+                edges: [[4, 3], [3, 2], [2, 1], [1, 0], [5, 5]],
+                parent: [0, 0, 1, 2, 3, 5],
+                size: [5, 4, 3, 2, 1, 1],
+                arrayHL: { parent: [0], size: [] },
+                changedCells: { parent: [], size: [] },
+                isImportant: true
+            });
+
+            // Step 6: Compress 1
+            steps.push({
+                desc: 'Unwinding recursion - Node 1: Set parent[1] = 0 (already 0). Return 0.',
+                codeIds: ['find-compress'],
+                nodes: { 4: 'active', 3: 'active', 2: 'active', 1: 'joined', 0: 'found' },
+                edges: [[4, 3], [3, 2], [2, 1], [1, 0], [5, 5]],
+                parent: [0, 0, 1, 2, 3, 5],
+                size: [5, 4, 3, 2, 1, 1],
+                arrayHL: { parent: [1], size: [] },
+                changedCells: { parent: [], size: [] },
+                isImportant: true
+            });
+
+            // Step 7: Compress 2
+            steps.push({
+                desc: 'Unwinding recursion - Node 2: Set parent[2] = 0. Node 2 now points directly to root 0! Return 0.',
+                codeIds: ['find-compress'],
+                nodes: { 4: 'active', 3: 'active', 2: 'joined', 1: 'result-same', 0: 'found' },
+                edges: [[4, 3], [3, 2], [2, 0], [1, 0], [5, 5]],
+                parent: [0, 0, 0, 2, 3, 5],
+                size: [5, 4, 3, 2, 1, 1],
+                arrayHL: { parent: [2], size: [] },
+                changedCells: { parent: [2], size: [] },
+                isImportant: true
+            });
+
+            // Step 8: Compress 3
+            steps.push({
+                desc: 'Unwinding recursion - Node 3: Set parent[3] = 0. Node 3 now points directly to root 0! Return 0.',
+                codeIds: ['find-compress'],
+                nodes: { 4: 'active', 3: 'joined', 2: 'result-same', 1: 'result-same', 0: 'found' },
+                edges: [[4, 3], [3, 0], [2, 0], [1, 0], [5, 5]],
+                parent: [0, 0, 0, 0, 3, 5],
+                size: [5, 4, 3, 2, 1, 1],
+                arrayHL: { parent: [3], size: [] },
+                changedCells: { parent: [3], size: [] },
+                isImportant: true
+            });
+
+            // Step 9: Compress 4
+            steps.push({
+                desc: 'Unwinding recursion - Node 4: Set parent[4] = 0. Node 4 now points directly to root 0! Return 0.',
+                codeIds: ['find-compress'],
+                nodes: { 4: 'joined', 3: 'result-same', 2: 'result-same', 1: 'result-same', 0: 'found' },
+                edges: [[4, 0], [3, 0], [2, 0], [1, 0], [5, 5]],
+                parent: [0, 0, 0, 0, 0, 5],
+                size: [5, 4, 3, 2, 1, 1],
+                arrayHL: { parent: [4], size: [] },
+                changedCells: { parent: [4], size: [] },
+                isImportant: true
+            });
+
+            // Step 10: Complete
+            steps.push({
+                desc: '<strong>Path Compression complete!</strong> The entire tree is now completely flat. Future lookups on nodes 1, 2, 3, or 4 will resolve instantly in constant <strong>O(1)</strong> time!',
+                codeIds: ['find-compress'],
+                nodes: { 4: 'result-same', 3: 'result-same', 2: 'result-same', 1: 'result-same', 0: 'found' },
+                edges: [[1, 0], [2, 0], [3, 0], [4, 0], [5, 5]],
+                parent: [0, 0, 0, 0, 0, 5],
+                size: [5, 4, 3, 2, 1, 1],
+                arrayHL: { parent: [], size: [] },
+                changedCells: { parent: [], size: [] },
+                isImportant: true
+            });
+
+            this.dsu = new DSU(6);
+            this.history = [];
+            this.redoStack = [];
+            this.opHistory = [];
+            this.steps = steps;
+            this.currentStep = -1;
+
+            this._setStepUI(true);
+            this._renderStep(0);
+            this._stopAutoPlay();
+        }
     }
 }
 
