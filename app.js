@@ -37,9 +37,9 @@ const CPP_LINES = [
 // ---- Configuration ----
 const CFG = {
     NODE_R: 28,
-    LEVEL_H: 100,
-    SIBLING_GAP: 80,
-    TREE_GAP: 100,
+    LEVEL_H: 110,
+    SIBLING_GAP: 95,
+    TREE_GAP: 120,
     MIN_ZOOM: 0.3,
     MAX_ZOOM: 3,
     ZOOM_STEP: 0.12,
@@ -432,14 +432,12 @@ function computeTreeLayout(parent, size, n) {
     const treeroots = roots.filter(r => children[r].length > 0);
 
     const positions = {};
+    const NODE_GAP_X = 90;
+    const NODE_GAP_Y = 82;
 
-    // Lay out singletons in a 2D rectangular matrix box shape (cols x rows)
-    const cols = Math.ceil(Math.sqrt(singletons.length));
-    const rows = singletons.length > 0 ? Math.ceil(singletons.length / cols) : 0;
-    const NODE_GAP_X = 95;
-    const NODE_GAP_Y = 85;
-
-    if (singletons.length > 0) {
+    // Case 1: ONLY singletons (no trees formed yet) -> center them in a neat 2D grid
+    if (treeroots.length === 0) {
+        const cols = Math.ceil(Math.sqrt(singletons.length));
         for (let i = 0; i < singletons.length; i++) {
             const row = Math.floor(i / cols);
             const col = i % cols;
@@ -451,18 +449,61 @@ function computeTreeLayout(parent, size, n) {
                 y: row * NODE_GAP_Y,
             };
         }
+        return { positions, roots, children, singletons };
     }
 
-    // Lay out real trees (hierarchical) below the singleton rectangle box
-    let globalX = -((treeroots.length - 1) * CFG.TREE_GAP) / 2;
-    const treeYOffset = singletons.length > 0
-        ? (rows * NODE_GAP_Y) + 60
-        : 0;
+    // Case 2: ONLY trees (all singletons have been united) -> center trees horizontally
+    if (singletons.length === 0) {
+        let globalX = -((treeroots.length - 1) * CFG.TREE_GAP) / 2;
+        function layoutSubtreeOnly(node, depth) {
+            const kids = children[node];
+            if (kids.length === 0) {
+                positions[node] = { x: globalX, y: depth * CFG.LEVEL_H };
+                globalX += CFG.SIBLING_GAP;
+                return;
+            }
+            const startX = globalX;
+            for (const child of kids) {
+                layoutSubtreeOnly(child, depth + 1);
+            }
+            const endX = globalX - CFG.SIBLING_GAP;
+            positions[node] = {
+                x: (startX + endX) / 2,
+                y: depth * CFG.LEVEL_H,
+            };
+        }
+        for (const root of treeroots) {
+            layoutSubtreeOnly(root, 0);
+            globalX += CFG.TREE_GAP;
+        }
+        return { positions, roots, children, singletons };
+    }
+
+    // Case 3: BOTH singletons and operated trees exist!
+    // Free single nodes go on the LEFT side, operated trees go on the RIGHT side.
+    const sCols = singletons.length > 8 ? 3 : (singletons.length > 3 ? 2 : 1);
+    const sRows = Math.ceil(singletons.length / sCols);
+
+    for (let i = 0; i < singletons.length; i++) {
+        const row = Math.floor(i / sCols);
+        const col = i % sCols;
+        positions[singletons[i]] = {
+            x: col * NODE_GAP_X,
+            y: row * NODE_GAP_Y,
+        };
+    }
+
+    const sMaxX = (sCols - 1) * NODE_GAP_X;
+    const sHeight = (sRows - 1) * NODE_GAP_Y;
+
+    // Lay out operated trees with a distinct gap separating them from singletons
+    const GAP_BETWEEN_SECTIONS = 260;
+    let globalX = sMaxX + GAP_BETWEEN_SECTIONS;
 
     function layoutSubtree(node, depth) {
         const kids = children[node];
         if (kids.length === 0) {
-            positions[node] = { x: globalX, y: treeYOffset + depth * CFG.LEVEL_H };
+            positions[node] = { x: globalX, y: depth * CFG.LEVEL_H };
             globalX += CFG.SIBLING_GAP;
             return;
         }
@@ -473,13 +514,37 @@ function computeTreeLayout(parent, size, n) {
         const endX = globalX - CFG.SIBLING_GAP;
         positions[node] = {
             x: (startX + endX) / 2,
-            y: treeYOffset + depth * CFG.LEVEL_H,
+            y: depth * CFG.LEVEL_H,
         };
     }
 
     for (const root of treeroots) {
         layoutSubtree(root, 0);
         globalX += CFG.TREE_GAP;
+    }
+
+    // Calculate vertical height of trees to align singletons and trees vertically
+    let tMinY = Infinity, tMaxY = -Infinity;
+    for (let i = 0; i < n; i++) {
+        if (parent[i] !== i || children[i].length > 0) {
+            if (positions[i].y < tMinY) tMinY = positions[i].y;
+            if (positions[i].y > tMaxY) tMaxY = positions[i].y;
+        }
+    }
+    const tHeight = tMaxY - tMinY;
+
+    if (tHeight > sHeight) {
+        const sShiftY = (tHeight - sHeight) / 2;
+        for (const s of singletons) {
+            positions[s].y += sShiftY;
+        }
+    } else if (sHeight > tHeight) {
+        const tShiftY = (sHeight - tHeight) / 2;
+        for (let i = 0; i < n; i++) {
+            if (parent[i] !== i || children[i].length > 0) {
+                positions[i].y += tShiftY;
+            }
+        }
     }
 
     return { positions, roots, children, singletons };
@@ -532,8 +597,8 @@ class Renderer {
                 if (pos.y < sMinY) sMinY = pos.y;
                 if (pos.y > sMaxY) sMaxY = pos.y;
             }
-            const boxPadX = 45;
-            const boxPadY = 36;
+            const boxPadX = 42;
+            const boxPadY = 32;
             const boxX = sMinX + offsetX - boxPadX;
             const boxY = sMinY + offsetY - boxPadY;
             const boxW = (sMaxX - sMinX) + boxPadX * 2;
