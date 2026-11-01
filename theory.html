@@ -510,6 +510,7 @@
             overflow-x: auto;
             line-height: 1.45;
             box-shadow: inset 0 2px 8px rgba(0,0,0,0.4);
+            white-space: pre;
         }
 
         .diagram-caption {
@@ -518,6 +519,242 @@
             color: var(--text-muted);
             text-align: center;
             margin-top: 8px;
+        }
+
+        /* Sets Visual Container */
+        .sets-visual-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .set-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .set-card.cyan { border-top: 3px solid var(--accent); }
+        .set-card.amber { border-top: 3px solid var(--highlight); }
+        .set-card.emerald { border-top: 3px solid var(--success); }
+
+        .set-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .set-tag {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .set-root-badge {
+            font-size: 11px;
+            font-weight: 700;
+            font-family: var(--mono);
+            padding: 2px 8px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-secondary);
+        }
+
+        .set-nodes {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .node-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #1e293b;
+            color: var(--text-primary);
+            font-family: var(--mono);
+            font-weight: 700;
+            font-size: 13px;
+            border: 1px solid var(--border-light);
+        }
+
+        .node-pill.root {
+            background: rgba(6, 182, 212, 0.15);
+            border-color: var(--accent);
+            color: var(--accent-light);
+            box-shadow: 0 0 10px rgba(6, 182, 212, 0.3);
+        }
+
+        .set-desc {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-family: var(--mono);
+        }
+
+        /* SVG Visual Card */
+        .svg-visual-card {
+            background: #070b12;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: var(--shadow-md);
+            overflow-x: auto;
+        }
+
+        .svg-visual-card.danger {
+            border-color: rgba(239, 68, 68, 0.3);
+            background: linear-gradient(180deg, rgba(239, 68, 68, 0.04), #070b12);
+        }
+
+        .svg-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .danger-pill {
+            font-size: 12px;
+            font-weight: 700;
+            color: #f87171;
+            background: rgba(239, 68, 68, 0.15);
+            padding: 4px 10px;
+            border-radius: var(--radius-sm);
+        }
+
+        .depth-pill {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--highlight-light);
+            font-family: var(--mono);
+        }
+
+        .svg-card-footer {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 14px;
+            line-height: 1.5;
+            border-top: 1px solid var(--border);
+            padding-top: 12px;
+        }
+
+        /* Path Compression Comparison */
+        .path-compress-comparison {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 16px;
+            align-items: center;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            margin: 22px 0;
+            box-shadow: var(--shadow-md);
+        }
+
+        .compress-col {
+            background: #070b12;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 18px;
+            text-align: center;
+        }
+
+        .compress-col.before {
+            border-top: 3px solid var(--error);
+        }
+
+        .compress-col.after {
+            border-top: 3px solid var(--success);
+        }
+
+        .col-header {
+            margin-bottom: 12px;
+        }
+
+        .state-badge {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 3px 8px;
+            border-radius: var(--radius-sm);
+            display: inline-block;
+            margin-bottom: 6px;
+        }
+
+        .state-badge.before {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+        }
+
+        .state-badge.after {
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+        }
+
+        .compress-col h4 {
+            font-size: 14.5px;
+            color: var(--text-primary);
+        }
+
+        .col-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 10px;
+            margin-bottom: 0;
+        }
+
+        .compress-divider {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            text-align: center;
+        }
+
+        .divider-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(6, 182, 212, 0.15);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            color: var(--accent-light);
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .divider-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--accent-light);
+            max-width: 90px;
+            line-height: 1.25;
+        }
+
+        @media (max-width: 768px) {
+            .path-compress-comparison {
+                grid-template-columns: 1fr;
+            }
+            .compress-divider {
+                flex-direction: row;
+                justify-content: center;
+            }
         }
 
         /* Array Visualization Mock */
@@ -944,14 +1181,33 @@
                 <p>
                     In mathematics, two sets are said to be <strong>disjoint</strong> if they have no elements in common — their intersection is completely empty:
                 </p>
-                <div class="diagram-box">
-Set A = { 0, 1, 2 }
-Set B = { 3, 4 }
-Set C = { 5 }
-
-Intersection: A ∩ B = ∅,  B ∩ C = ∅,  A ∩ C = ∅
-Every element belongs to exactly ONE set!
+                <div class="sets-visual-container">
+                    <div class="set-card cyan">
+                        <div class="set-header"><span class="set-tag">Clan / Set A</span> <span class="set-root-badge">Leader: 0</span></div>
+                        <div class="set-nodes">
+                            <span class="node-pill root" title="Leader Root">0</span>
+                            <span class="node-pill">1</span>
+                            <span class="node-pill">2</span>
+                        </div>
+                        <div class="set-desc">Elements: { 0, 1, 2 }</div>
+                    </div>
+                    <div class="set-card amber">
+                        <div class="set-header"><span class="set-tag">Clan / Set B</span> <span class="set-root-badge">Leader: 3</span></div>
+                        <div class="set-nodes">
+                            <span class="node-pill root" title="Leader Root">3</span>
+                            <span class="node-pill">4</span>
+                        </div>
+                        <div class="set-desc">Elements: { 3, 4 }</div>
+                    </div>
+                    <div class="set-card emerald">
+                        <div class="set-header"><span class="set-tag">Clan / Set C</span> <span class="set-root-badge">Leader: 5</span></div>
+                        <div class="set-nodes">
+                            <span class="node-pill root" title="Leader Root">5</span>
+                        </div>
+                        <div class="set-desc">Elements: { 5 } (Singleton)</div>
+                    </div>
                 </div>
+                <div class="diagram-caption">Disjoint Sets: No overlapping members (A ∩ B = ∅, B ∩ C = ∅, A ∩ C = ∅). Every element belongs to exactly ONE set!</div>
                 <p>
                     DSU maintains a collection of such non-overlapping, partition sets over $N$ items.
                 </p>
@@ -1024,13 +1280,63 @@ Every element belongs to exactly ONE set!
                     </p>
                 </div>
 
-                <div class="diagram-box">
-  Tree 1 (Root: 0)         Tree 2 (Root: 3)         Tree 3 (Root: 5)
-        (0)                      (3)                      (5)
-       /   \                      |
-     (1)   (2)                   (4)
+                <div class="svg-visual-card">
+                    <svg viewBox="0 0 650 180" width="100%" height="180" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <marker id="arrow-cyan" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 1 L 10 5 L 0 9 z" fill="#06b6d4" />
+                            </marker>
+                            <marker id="arrow-amber" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 1 L 10 5 L 0 9 z" fill="#f59e0b" />
+                            </marker>
+                        </defs>
+
+                        <!-- Tree 1 -->
+                        <rect x="20" y="15" width="220" height="150" rx="12" fill="rgba(6, 182, 212, 0.05)" stroke="rgba(6, 182, 212, 0.25)" stroke-dasharray="5 4"/>
+                        <text x="35" y="38" fill="#22d3ee" font-size="12" font-weight="700" font-family="'Inter', sans-serif">Tree 1 (Root: 0)</text>
+
+                        <line x1="75" y1="110" x2="118" y2="72" stroke="#06b6d4" stroke-width="2.5" marker-end="url(#arrow-cyan)"/>
+                        <line x1="185" y1="110" x2="142" y2="72" stroke="#06b6d4" stroke-width="2.5" marker-end="url(#arrow-cyan)"/>
+
+                        <circle cx="130" cy="65" r="22" fill="#0a192f" stroke="#06b6d4" stroke-width="3"/>
+                        <circle cx="130" cy="65" r="26" fill="none" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="3 3"/>
+                        <text x="130" y="70" fill="#fff" font-size="14" font-weight="700" text-anchor="middle" font-family="'JetBrains Mono', monospace">0</text>
+                        <rect x="108" y="26" width="44" height="15" rx="3" fill="#06b6d4"/>
+                        <text x="130" y="37" fill="#000" font-size="9" font-weight="800" text-anchor="middle" font-family="'Inter', sans-serif">ROOT</text>
+
+                        <circle cx="65" cy="125" r="18" fill="#111827" stroke="#334155" stroke-width="2"/>
+                        <text x="65" y="130" fill="#94a3b8" font-size="13" font-weight="600" text-anchor="middle" font-family="'JetBrains Mono', monospace">1</text>
+
+                        <circle cx="195" cy="125" r="18" fill="#111827" stroke="#334155" stroke-width="2"/>
+                        <text x="195" y="130" fill="#94a3b8" font-size="13" font-weight="600" text-anchor="middle" font-family="'JetBrains Mono', monospace">2</text>
+
+                        <!-- Tree 2 -->
+                        <rect x="260" y="15" width="180" height="150" rx="12" fill="rgba(245, 158, 11, 0.05)" stroke="rgba(245, 158, 11, 0.25)" stroke-dasharray="5 4"/>
+                        <text x="275" y="38" fill="#fbbf24" font-size="12" font-weight="700" font-family="'Inter', sans-serif">Tree 2 (Root: 3)</text>
+
+                        <line x1="350" y1="110" x2="350" y2="85" stroke="#f59e0b" stroke-width="2.5" marker-end="url(#arrow-amber)"/>
+
+                        <circle cx="350" cy="65" r="22" fill="#1f1609" stroke="#f59e0b" stroke-width="3"/>
+                        <circle cx="350" cy="65" r="26" fill="none" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="3 3"/>
+                        <text x="350" y="70" fill="#fff" font-size="14" font-weight="700" text-anchor="middle" font-family="'JetBrains Mono', monospace">3</text>
+                        <rect x="328" y="26" width="44" height="15" rx="3" fill="#f59e0b"/>
+                        <text x="350" y="37" fill="#000" font-size="9" font-weight="800" text-anchor="middle" font-family="'Inter', sans-serif">ROOT</text>
+
+                        <circle cx="350" cy="125" r="18" fill="#111827" stroke="#334155" stroke-width="2"/>
+                        <text x="350" y="130" fill="#94a3b8" font-size="13" font-weight="600" text-anchor="middle" font-family="'JetBrains Mono', monospace">4</text>
+
+                        <!-- Tree 3 -->
+                        <rect x="460" y="15" width="170" height="150" rx="12" fill="rgba(16, 185, 129, 0.05)" stroke="rgba(16, 185, 129, 0.25)" stroke-dasharray="5 4"/>
+                        <text x="475" y="38" fill="#34d399" font-size="12" font-weight="700" font-family="'Inter', sans-serif">Tree 3 (Singleton: 5)</text>
+
+                        <circle cx="545" cy="85" r="22" fill="#061c16" stroke="#10b981" stroke-width="3"/>
+                        <circle cx="545" cy="85" r="26" fill="none" stroke="#34d399" stroke-width="1.5" stroke-dasharray="3 3"/>
+                        <text x="545" y="90" fill="#fff" font-size="14" font-weight="700" text-anchor="middle" font-family="'JetBrains Mono', monospace">5</text>
+                        <rect x="523" y="46" width="44" height="15" rx="3" fill="#10b981"/>
+                        <text x="545" y="57" fill="#000" font-size="9" font-weight="800" text-anchor="middle" font-family="'Inter', sans-serif">ROOT</text>
+                    </svg>
                 </div>
-                <div class="diagram-caption">A DSU forest with 3 disjoint components: {0, 1, 2}, {3, 4}, and {5}.</div>
+                <div class="diagram-caption">Forest representation in memory: 3 separate trees. Each node points upward to its parent. Roots (0, 3, 5) point to themselves!</div>
             </section>
 
             <!-- 4. The 3 Core Operations -->
@@ -1048,11 +1354,14 @@ Every element belongs to exactly ONE set!
                     Initializes $N$ elements. At the start, each element is isolated in its own independent set with size 1. 
                     Each node is its own representative.
                 </p>
-                <div class="diagram-box">
-for (let i = 0; i < n; i++) {
-    parent[i] = i;  // Everyone is their own leader
-    size[i] = 1;    // Each set starts with 1 member
-}
+                <div class="code-container" style="margin: 16px 0;">
+                    <div style="background: var(--bg-card); padding: 8px 16px; border-bottom: 1px solid var(--border); font-size: 12px; color: var(--text-muted); font-family: var(--mono);">
+                        makeSet(n) Initialization
+                    </div>
+                    <pre class="code-panel active" style="margin:0; padding: 18px 20px;"><code><span class="token-keyword">for</span> (<span class="token-type">let</span> i = <span class="token-num">0</span>; i &lt; n; i++) {
+    parent[i] = i;  <span class="token-comment">// Everyone is their own leader: parent[0]=0, parent[1]=1...</span>
+    size[i] = <span class="token-num">1</span>;    <span class="token-comment">// Each set starts with size = 1</span>
+}</code></pre>
                 </div>
 
                 <h3>2. find(x)</h3>
@@ -1084,20 +1393,55 @@ for (let i = 0; i < n; i++) {
                 <p>
                     Consider sequentially uniting: <code>union(1, 0)</code>, <code>union(2, 1)</code>, <code>union(3, 2)</code>, <code>union(4, 3)</code>, <code>union(5, 4)</code>:
                 </p>
-                <div class="diagram-box">
-  (5)
-   ↓
-  (4)
-   ↓
-  (3)
-   ↓
-  (2)
-   ↓
-  (1)
-   ↓
-  (0) [Root]
+                <div class="svg-visual-card danger">
+                    <div class="svg-card-header">
+                        <span class="danger-pill">⚠️ Worst Case: Unbalanced Naive Chain</span>
+                        <span class="depth-pill">Tree Depth: 5 Levels = O(N) Traversal!</span>
+                    </div>
+                    <svg viewBox="0 0 680 120" width="100%" height="120" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <marker id="arrow-red" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 1 L 10 5 L 0 9 z" fill="#ef4444" />
+                            </marker>
+                        </defs>
 
-Find(5) must traverse 5 edges! Tree height = O(N)!
+                        <!-- Arrows connecting 5 -> 4 -> 3 -> 2 -> 1 -> 0 -->
+                        <line x1="82" y1="55" x2="138" y2="55" stroke="#ef4444" stroke-width="2.5" marker-end="url(#arrow-red)"/>
+                        <line x1="182" y1="55" x2="238" y2="55" stroke="#ef4444" stroke-width="2.5" marker-end="url(#arrow-red)"/>
+                        <line x1="282" y1="55" x2="338" y2="55" stroke="#ef4444" stroke-width="2.5" marker-end="url(#arrow-red)"/>
+                        <line x1="382" y1="55" x2="438" y2="55" stroke="#ef4444" stroke-width="2.5" marker-end="url(#arrow-red)"/>
+                        <line x1="482" y1="55" x2="538" y2="55" stroke="#ef4444" stroke-width="2.5" marker-end="url(#arrow-red)"/>
+
+                        <!-- Node 5 (Query Start) -->
+                        <circle cx="60" cy="55" r="22" fill="#2d1515" stroke="#ef4444" stroke-width="2.5"/>
+                        <text x="60" y="60" fill="#fca5a5" font-size="14" font-weight="700" text-anchor="middle" font-family="'JetBrains Mono', monospace">5</text>
+                        <text x="60" y="95" fill="#f87171" font-size="11" font-weight="600" text-anchor="middle" font-family="'Inter', sans-serif">Find(5) Start</text>
+
+                        <!-- Node 4 -->
+                        <circle cx="160" cy="55" r="22" fill="#1e2230" stroke="#475569" stroke-width="2"/>
+                        <text x="160" y="60" fill="#94a3b8" font-size="14" font-weight="700" text-anchor="middle" font-family="'JetBrains Mono', monospace">4</text>
+
+                        <!-- Node 3 -->
+                        <circle cx="260" cy="55" r="22" fill="#1e2230" stroke="#475569" stroke-width="2"/>
+                        <text x="260" y="60" fill="#94a3b8" font-size="14" font-weight="700" text-anchor="middle" font-family="'JetBrains Mono', monospace">3</text>
+
+                        <!-- Node 2 -->
+                        <circle cx="360" cy="55" r="22" fill="#1e2230" stroke="#475569" stroke-width="2"/>
+                        <text x="360" y="60" fill="#94a3b8" font-size="14" font-weight="700" text-anchor="middle" font-family="'JetBrains Mono', monospace">2</text>
+
+                        <!-- Node 1 -->
+                        <circle cx="460" cy="55" r="22" fill="#1e2230" stroke="#475569" stroke-width="2"/>
+                        <text x="460" y="60" fill="#94a3b8" font-size="14" font-weight="700" text-anchor="middle" font-family="'JetBrains Mono', monospace">1</text>
+
+                        <!-- Node 0 (Root) -->
+                        <circle cx="565" cy="55" r="24" fill="#082f49" stroke="#06b6d4" stroke-width="3"/>
+                        <circle cx="565" cy="55" r="28" fill="none" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="3 3"/>
+                        <text x="565" y="61" fill="#fff" font-size="15" font-weight="700" text-anchor="middle" font-family="'JetBrains Mono', monospace">0</text>
+                        <text x="565" y="95" fill="#38bdf8" font-size="11" font-weight="700" text-anchor="middle" font-family="'Inter', sans-serif">Root Target</text>
+                    </svg>
+                    <div class="svg-card-footer">
+                        Calling <code>find(5)</code> must traverse through 5 sequential pointers (5 → 4 → 3 → 2 → 1 → 0). On $N = 100,000$ elements, every query takes 100,000 steps — defeating the purpose of DSU!
+                    </div>
                 </div>
                 <div class="callout warning">
                     <div class="callout-title">⚠️ The O(N) Worst Case Trap</div>
@@ -1183,28 +1527,102 @@ Find(5) must traverse 5 edges! Tree height = O(N)!
                     They all belong to root <code>0</code>!
                 </p>
 
-                <div class="diagram-box">
-[BEFORE Find(4)]                   [AFTER Find(4) with Path Compression]
-      (0) [Root]                                (0) [Root]
-       ↑                                     ↗   ↑   ↖   ↖
-      (1)                                  (1)  (2)  (3)  (4)
-       ↑                                  
-      (2)                                 All visited nodes now point
-       ↑                                  DIRECTLY to root 0!
-      (3)
-       ↑
-      (4) [Query]
+                <div class="path-compress-comparison">
+                    <!-- Left: Before -->
+                    <div class="compress-col before">
+                        <div class="col-header">
+                            <span class="state-badge before">Before Find(4)</span>
+                            <h4>Tall 4-Level Chain</h4>
+                        </div>
+                        <svg viewBox="0 0 240 220" width="100%" height="220" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <marker id="arr-gray" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+                                    <path d="M 0 1 L 10 5 L 0 9 z" fill="#64748b" />
+                                </marker>
+                            </defs>
+                            <line x1="120" y1="180" x2="120" y2="155" stroke="#ef4444" stroke-width="2" marker-end="url(#arr-gray)"/>
+                            <line x1="120" y1="135" x2="120" y2="110" stroke="#f59e0b" stroke-width="2" marker-end="url(#arr-gray)"/>
+                            <line x1="120" y1="90" x2="120" y2="65" stroke="#64748b" stroke-width="2" marker-end="url(#arr-gray)"/>
+                            <line x1="120" y1="45" x2="120" y2="30" stroke="#06b6d4" stroke-width="2" marker-end="url(#arr-gray)"/>
+
+                            <circle cx="120" cy="22" r="15" fill="#082f49" stroke="#06b6d4" stroke-width="2.5"/>
+                            <text x="120" y="27" fill="#fff" font-size="12" font-weight="700" text-anchor="middle" font-family="'JetBrains Mono', monospace">0</text>
+                            <text x="160" y="26" fill="#38bdf8" font-size="11" font-weight="600" font-family="'Inter', sans-serif">Root</text>
+
+                            <circle cx="120" cy="55" r="13" fill="#111827" stroke="#475569" stroke-width="1.5"/>
+                            <text x="120" y="59" fill="#94a3b8" font-size="11" font-weight="600" text-anchor="middle" font-family="'JetBrains Mono', monospace">1</text>
+
+                            <circle cx="120" cy="100" r="13" fill="#111827" stroke="#475569" stroke-width="1.5"/>
+                            <text x="120" y="104" fill="#94a3b8" font-size="11" font-weight="600" text-anchor="middle" font-family="'JetBrains Mono', monospace">2</text>
+
+                            <circle cx="120" cy="145" r="13" fill="#111827" stroke="#475569" stroke-width="1.5"/>
+                            <text x="120" y="149" fill="#94a3b8" font-size="11" font-weight="600" text-anchor="middle" font-family="'JetBrains Mono', monospace">3</text>
+
+                            <circle cx="120" cy="190" r="15" fill="#2d1515" stroke="#ef4444" stroke-width="2"/>
+                            <text x="120" y="195" fill="#fca5a5" font-size="12" font-weight="700" text-anchor="middle" font-family="'JetBrains Mono', monospace">4</text>
+                            <text x="165" y="194" fill="#f87171" font-size="11" font-weight="600" font-family="'Inter', sans-serif">Query</text>
+                        </svg>
+                        <p class="col-desc">Requires traversing up 4 edges step-by-step.</p>
+                    </div>
+
+                    <!-- Middle Divider -->
+                    <div class="compress-divider">
+                        <div class="divider-icon">⚡</div>
+                        <div class="divider-label">Path Compression</div>
+                    </div>
+
+                    <!-- Right: After -->
+                    <div class="compress-col after">
+                        <div class="col-header">
+                            <span class="state-badge after">After Find(4)</span>
+                            <h4>Flat 1-Level Star Tree</h4>
+                        </div>
+                        <svg viewBox="0 0 240 220" width="100%" height="220" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <marker id="arr-green" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+                                    <path d="M 0 1 L 10 5 L 0 9 z" fill="#10b981" />
+                                </marker>
+                            </defs>
+
+                            <line x1="40" y1="160" x2="105" y2="52" stroke="#10b981" stroke-width="2" marker-end="url(#arr-green)"/>
+                            <line x1="90" y1="160" x2="115" y2="52" stroke="#10b981" stroke-width="2" marker-end="url(#arr-green)"/>
+                            <line x1="150" y1="160" x2="125" y2="52" stroke="#10b981" stroke-width="2" marker-end="url(#arr-green)"/>
+                            <line x1="200" y1="160" x2="135" y2="52" stroke="#10b981" stroke-width="2" marker-end="url(#arr-green)"/>
+
+                            <circle cx="120" cy="38" r="18" fill="#062e24" stroke="#10b981" stroke-width="3"/>
+                            <circle cx="120" cy="38" r="23" fill="none" stroke="#34d399" stroke-width="1.5" stroke-dasharray="3 3"/>
+                            <text x="120" y="43" fill="#fff" font-size="13" font-weight="700" text-anchor="middle" font-family="'JetBrains Mono', monospace">0</text>
+                            <text x="120" y="15" fill="#34d399" font-size="11" font-weight="700" text-anchor="middle" font-family="'Inter', sans-serif">Root</text>
+
+                            <circle cx="40" cy="175" r="13" fill="#111827" stroke="#10b981" stroke-width="1.5"/>
+                            <text x="40" y="179" fill="#6ee7b7" font-size="11" font-weight="600" text-anchor="middle" font-family="'JetBrains Mono', monospace">1</text>
+
+                            <circle cx="90" cy="175" r="13" fill="#111827" stroke="#10b981" stroke-width="1.5"/>
+                            <text x="90" y="179" fill="#6ee7b7" font-size="11" font-weight="600" text-anchor="middle" font-family="'JetBrains Mono', monospace">2</text>
+
+                            <circle cx="150" cy="175" r="13" fill="#111827" stroke="#10b981" stroke-width="1.5"/>
+                            <text x="150" y="179" fill="#6ee7b7" font-size="11" font-weight="600" text-anchor="middle" font-family="'JetBrains Mono', monospace">3</text>
+
+                            <circle cx="200" cy="175" r="13" fill="#111827" stroke="#10b981" stroke-width="1.5"/>
+                            <text x="200" y="179" fill="#6ee7b7" font-size="11" font-weight="600" text-anchor="middle" font-family="'JetBrains Mono', monospace">4</text>
+                        </svg>
+                        <p class="col-desc">All nodes now point directly to root. Future finds run in <strong>O(1)</strong>!</p>
+                    </div>
                 </div>
 
                 <h3>The One-Liner Magic</h3>
                 <p>
                     In recursive code, path compression is implemented with just <strong>one single line</strong>:
                 </p>
-                <div class="diagram-box">
-function find(i) {
-    if (parent[i] === i) return i;
-    return parent[i] = find(parent[i]); // Path compression!
-}
+                <div class="code-container" style="margin: 16px 0;">
+                    <div style="background: var(--bg-card); padding: 8px 16px; border-bottom: 1px solid var(--border); font-size: 12px; color: var(--text-muted); font-family: var(--mono);">
+                        Path Compression in 1 Line of Code
+                    </div>
+                    <pre class="code-panel active" style="margin:0; padding: 18px 20px;"><code><span class="token-keyword">function</span> <span class="token-func">find</span>(i) {
+    <span class="token-keyword">if</span> (parent[i] === i) <span class="token-keyword">return</span> i;
+    <span class="token-comment">// Flatten the tree on the way back down the recursion:</span>
+    <span class="token-keyword">return</span> parent[i] = <span class="token-func">find</span>(parent[i]); 
+}</code></pre>
                 </div>
 
                 <div class="callout">
