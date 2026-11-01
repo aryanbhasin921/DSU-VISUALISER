@@ -1,0 +1,1577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Disjoint Set Union (DSU) — Complete Theory & Beginner Guide</title>
+    <meta name="description" content="A comprehensive, beginner-friendly guide to Disjoint Set Union (Union-Find). Learn why it was needed, core structures, union by size/rank, path compression, real-world applications, and how to practice with our visualizer.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #0a0f1a;
+            --bg-card: #111827;
+            --bg-elevated: #1a2234;
+            --bg-hover: #243044;
+            --accent: #06b6d4;
+            --accent-light: #22d3ee;
+            --accent-glow: rgba(6, 182, 212, 0.18);
+            --primary: #6366f1;
+            --primary-light: #818cf8;
+            --primary-glow: rgba(99, 102, 241, 0.18);
+            --highlight: #f59e0b;
+            --highlight-light: #fbbf24;
+            --success: #10b981;
+            --success-glow: rgba(16, 185, 129, 0.15);
+            --error: #ef4444;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: #1e293b;
+            --border-light: #334155;
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --mono: 'JetBrains Mono', 'Fira Code', monospace;
+            --shadow-lg: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
+            --shadow-md: 0 8px 24px -6px rgba(0, 0, 0, 0.4);
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            font-family: var(--font);
+            line-height: 1.65;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        /* Top Navigation Bar */
+        .top-nav {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: rgba(10, 15, 26, 0.88);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.2s ease;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--text-primary);
+        }
+
+        .nav-logo {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 18px;
+            color: white;
+            box-shadow: 0 4px 12px var(--accent-glow);
+        }
+
+        .nav-title {
+            font-weight: 700;
+            font-size: 16px;
+            letter-spacing: -0.3px;
+        }
+
+        .nav-title span {
+            color: var(--accent-light);
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 13.5px;
+            font-weight: 500;
+            transition: color 0.15s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--accent-light);
+        }
+
+        .btn-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            text-decoration: none;
+            padding: 9px 18px;
+            border-radius: var(--radius-md);
+            font-size: 13.5px;
+            font-weight: 600;
+            box-shadow: 0 4px 14px var(--primary-glow);
+            transition: all 0.2s ease;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-cta:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(6, 182, 212, 0.35);
+        }
+
+        /* Hero Header */
+        .hero {
+            padding: 70px 24px 50px;
+            max-width: 1040px;
+            margin: 0 auto;
+            text-align: center;
+            position: relative;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 600px;
+            height: 300px;
+            background: radial-gradient(ellipse, rgba(99, 102, 241, 0.15), rgba(6, 182, 212, 0.08), transparent 70%);
+            filter: blur(50px);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .badge-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: rgba(6, 182, 212, 0.1);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent-light);
+            margin-bottom: 20px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .hero h1 {
+            font-size: clamp(32px, 5vw, 48px);
+            font-weight: 800;
+            letter-spacing: -1px;
+            line-height: 1.15;
+            margin-bottom: 18px;
+            background: linear-gradient(135deg, #ffffff 40%, var(--accent-light) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            font-size: clamp(16px, 2vw, 19px);
+            color: var(--text-secondary);
+            max-width: 760px;
+            margin: 0 auto 32px;
+            font-weight: 400;
+            line-height: 1.6;
+        }
+
+        .hero-actions {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            color: var(--text-primary);
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-elevated);
+            border-color: var(--accent);
+            color: var(--accent-light);
+        }
+
+        /* Metric Highlights Grid */
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            max-width: 1040px;
+            margin: 0 auto 60px;
+            padding: 0 24px;
+        }
+
+        .metric-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--border-light);
+        }
+
+        .metric-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .metric-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .metric-desc {
+            font-size: 12.5px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .metric-val {
+            font-family: var(--mono);
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent-light);
+        }
+
+        /* Main Container Layout */
+        .layout-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 24px 80px;
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            gap: 40px;
+            align-items: start;
+        }
+
+        /* Sticky Sidebar Table of Contents */
+        .sidebar {
+            position: sticky;
+            top: 85px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            max-height: calc(100vh - 110px);
+            overflow-y: auto;
+        }
+
+        .sidebar-title {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .toc-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .toc-list a {
+            display: block;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 13px;
+            padding: 6px 10px;
+            border-radius: var(--radius-sm);
+            transition: all 0.15s ease;
+            line-height: 1.4;
+        }
+
+        .toc-list a:hover {
+            color: var(--accent-light);
+            background: rgba(6, 182, 212, 0.08);
+            transform: translateX(3px);
+        }
+
+        /* Content Sections */
+        .content {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 56px;
+        }
+
+        section {
+            scroll-margin-top: 100px;
+        }
+
+        .section-header {
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 14px;
+        }
+
+        .section-tag {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--accent);
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        h2 {
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: var(--text-primary);
+            line-height: 1.25;
+        }
+
+        h3 {
+            font-size: 19px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 24px 0 12px;
+            letter-spacing: -0.2px;
+        }
+
+        p {
+            color: var(--text-secondary);
+            font-size: 15px;
+            line-height: 1.7;
+            margin-bottom: 16px;
+        }
+
+        p strong {
+            color: var(--text-primary);
+        }
+
+        /* Callout Box */
+        .callout {
+            background: rgba(99, 102, 241, 0.08);
+            border: 1px solid rgba(99, 102, 241, 0.25);
+            border-left: 4px solid var(--primary-light);
+            border-radius: var(--radius-md);
+            padding: 18px 20px;
+            margin: 20px 0;
+        }
+
+        .callout.tip {
+            background: rgba(6, 182, 212, 0.08);
+            border-color: rgba(6, 182, 212, 0.25);
+            border-left-color: var(--accent);
+        }
+
+        .callout.warning {
+            background: rgba(245, 158, 11, 0.08);
+            border-color: rgba(245, 158, 11, 0.25);
+            border-left-color: var(--highlight);
+        }
+
+        .callout-title {
+            font-weight: 700;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .callout.tip .callout-title { color: var(--accent-light); }
+        .callout.warning .callout-title { color: var(--highlight-light); }
+        .callout .callout-title { color: var(--primary-light); }
+
+        .callout p {
+            margin-bottom: 0;
+            font-size: 14px;
+        }
+
+        /* Comparison Cards */
+        .compare-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+            margin: 24px 0;
+        }
+
+        .compare-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 22px;
+            position: relative;
+        }
+
+        .compare-card.bad {
+            border-top: 3px solid var(--error);
+        }
+
+        .compare-card.good {
+            border-top: 3px solid var(--success);
+        }
+
+        .compare-badge {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 4px 8px;
+            border-radius: var(--radius-sm);
+            display: inline-block;
+            margin-bottom: 12px;
+        }
+
+        .compare-card.bad .compare-badge {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+        }
+
+        .compare-card.good .compare-badge {
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+        }
+
+        .compare-card h4 {
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .compare-card ul {
+            padding-left: 20px;
+            color: var(--text-secondary);
+            font-size: 13.5px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        /* Diagram / Visual Box */
+        .diagram-box {
+            background: #070b12;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            margin: 22px 0;
+            font-family: var(--mono);
+            font-size: 13px;
+            color: var(--accent-light);
+            overflow-x: auto;
+            line-height: 1.45;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.4);
+        }
+
+        .diagram-caption {
+            font-family: var(--font);
+            font-size: 12px;
+            color: var(--text-muted);
+            text-align: center;
+            margin-top: 8px;
+        }
+
+        /* Array Visualization Mock */
+        .array-table-wrapper {
+            overflow-x: auto;
+            margin: 20px 0;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            background: var(--bg-card);
+        }
+
+        .array-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: var(--mono);
+            font-size: 13.5px;
+            text-align: center;
+        }
+
+        .array-table th, .array-table td {
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+        }
+
+        .array-table th {
+            background: var(--bg-elevated);
+            color: var(--text-muted);
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+
+        .array-table td.root-val {
+            color: var(--accent-light);
+            font-weight: 700;
+        }
+
+        .array-table td.child-val {
+            color: var(--primary-light);
+        }
+
+        /* Code Block & Tabs */
+        .code-container {
+            background: #090d16;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            margin: 22px 0;
+            box-shadow: var(--shadow-md);
+        }
+
+        .code-tabs {
+            display: flex;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            padding: 0 12px;
+            overflow-x: auto;
+        }
+
+        .code-tab {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-family: var(--font);
+            font-size: 13px;
+            font-weight: 600;
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .code-tab:hover {
+            color: var(--text-primary);
+        }
+
+        .code-tab.active {
+            color: var(--accent-light);
+        }
+
+        .code-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--accent-light);
+        }
+
+        .code-panel {
+            display: none;
+            padding: 20px;
+            overflow-x: auto;
+            font-family: var(--mono);
+            font-size: 13px;
+            color: #e2e8f0;
+            line-height: 1.55;
+        }
+
+        .code-panel.active {
+            display: block;
+        }
+
+        pre code {
+            font-family: inherit;
+        }
+
+        .token-keyword { color: #f472b6; font-weight: 600; }
+        .token-type { color: #38bdf8; }
+        .token-func { color: #818cf8; }
+        .token-comment { color: #64748b; font-style: italic; }
+        .token-num { color: #fbbf24; }
+        .token-var { color: #e2e8f0; }
+
+        /* Step List */
+        .roadmap-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .roadmap-item {
+            display: flex;
+            gap: 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 18px 20px;
+            transition: border-color 0.2s ease;
+        }
+
+        .roadmap-item:hover {
+            border-color: var(--border-light);
+        }
+
+        .roadmap-number {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: rgba(6, 182, 212, 0.15);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            color: var(--accent-light);
+            font-weight: 700;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .roadmap-content h4 {
+            font-size: 15.5px;
+            margin-bottom: 4px;
+            color: var(--text-primary);
+        }
+
+        .roadmap-content p {
+            font-size: 13.5px;
+            color: var(--text-secondary);
+            margin-bottom: 0;
+            line-height: 1.5;
+        }
+
+        /* Applications Grid */
+        .app-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 18px;
+            margin: 22px 0;
+        }
+
+        .app-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            transition: all 0.2s ease;
+        }
+
+        .app-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--primary-light);
+        }
+
+        .app-card-icon {
+            font-size: 26px;
+            margin-bottom: 12px;
+        }
+
+        .app-card h4 {
+            font-size: 16px;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+
+        .app-card p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 0;
+            line-height: 1.5;
+        }
+
+        /* Feature CTA Box */
+        .visualizer-cta-box {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(6, 182, 212, 0.12));
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            border-radius: var(--radius-xl);
+            padding: 40px;
+            text-align: center;
+            margin: 40px 0 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .visualizer-cta-box h3 {
+            font-size: 24px;
+            margin-top: 0;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #fff, var(--accent-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .visualizer-cta-box p {
+            max-width: 600px;
+            margin: 0 auto 24px;
+            font-size: 15px;
+        }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 30px 24px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 13px;
+            background: var(--bg-card);
+        }
+
+        footer a {
+            color: var(--accent-light);
+            text-decoration: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 860px) {
+            .layout-container {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                display: none;
+            }
+            .compare-grid {
+                grid-template-columns: 1fr;
+            }
+            .nav-links {
+                display: none;
+            }
+            .top-nav {
+                padding: 12px 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sticky Top Navigation -->
+    <header class="top-nav">
+        <a href="index.html" class="nav-brand" title="Return to Visualizer">
+            <div class="nav-logo">⊔</div>
+            <div class="nav-title">DSU <span>Theory & Visualizer</span></div>
+        </a>
+        <ul class="nav-links">
+            <li><a href="#problem">Why DSU?</a></li>
+            <li><a href="#core-concept">Core Structure</a></li>
+            <li><a href="#operations">Operations</a></li>
+            <li><a href="#optimizations">Size vs Rank</a></li>
+            <li><a href="#path-compression">Path Compression</a></li>
+            <li><a href="#applications">Applications</a></li>
+            <li><a href="#code">Code</a></li>
+        </ul>
+        <a href="index.html" class="btn-cta" id="nav-btn-visualizer">
+            <span>🚀 Open Visualizer</span>
+        </a>
+    </header>
+
+    <!-- Hero Header -->
+    <section class="hero">
+        <div class="badge-pill">📘 Beginner-Friendly Comprehensive Guide</div>
+        <h1>Mastering Disjoint Set Union (DSU)</h1>
+        <p>
+            Why do we need DSU? How does a simple 1D array represent a dynamic forest of trees? 
+            Discover the intuition, mathematics, and optimizations behind near $O(1)$ dynamic connectivity.
+        </p>
+        <div class="hero-actions">
+            <a href="index.html" class="btn-cta" style="padding: 12px 24px; font-size: 15px;">
+                🚀 Launch Interactive Sandbox
+            </a>
+            <a href="#problem" class="btn-secondary">
+                📖 Start Reading Guide
+            </a>
+        </div>
+    </section>
+
+    <!-- Key Metrics Highlight Strip -->
+    <div class="metric-grid">
+        <div class="metric-card">
+            <div class="metric-icon">⚡</div>
+            <div class="metric-title">Time Complexity</div>
+            <div class="metric-val">O(α(N)) ≈ O(1)</div>
+            <div class="metric-desc">Amortized operations with Inverse Ackermann function.</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-icon">💾</div>
+            <div class="metric-title">Space Complexity</div>
+            <div class="metric-val">O(N) Array</div>
+            <div class="metric-desc">No pointers, nodes, or structs needed. Just flat arrays!</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-icon">🌲</div>
+            <div class="metric-title">Tree Depth Guard</div>
+            <div class="metric-val">O(log N) Bound</div>
+            <div class="metric-desc">Union by Size/Rank strictly prevents tall degenerate chains.</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-icon">🛠️</div>
+            <div class="metric-title">Primary Use Cases</div>
+            <div class="metric-val">Dynamic Graphs</div>
+            <div class="metric-desc">Kruskal's MST, Cycle Detection, Connected Components, Islands.</div>
+        </div>
+    </div>
+
+    <!-- Main Two-Column Layout -->
+    <main class="layout-container">
+        
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-title">Table of Contents</div>
+            <nav>
+                <ul class="toc-list">
+                    <li><a href="#problem">1. The Problem Statement</a></li>
+                    <li><a href="#core-concept">2. What is a Disjoint Set?</a></li>
+                    <li><a href="#representation">3. Forest & Array Representation</a></li>
+                    <li><a href="#operations">4. The 3 Core Operations</a></li>
+                    <li><a href="#naive-issue">5. The Flaw of Naive DSU</a></li>
+                    <li><a href="#optimizations">6. Union by Size vs Rank</a></li>
+                    <li><a href="#path-compression">7. Path Compression Magic</a></li>
+                    <li><a href="#applications">8. Real-World Applications</a></li>
+                    <li><a href="#code">9. Complete Implementations</a></li>
+                    <li><a href="#roadmap">10. Beginner Study Roadmap</a></li>
+                    <li><a href="#how-visualizer-helps">11. How the Visualizer Helps</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Guide Content -->
+        <article class="content">
+
+            <!-- 1. The Problem Statement -->
+            <section id="problem">
+                <div class="section-header">
+                    <span class="section-tag">Part 1 • The Motivation</span>
+                    <h2>The Problem Statement: Why Was DSU Needed?</h2>
+                </div>
+                <p>
+                    Imagine you are running a huge social network like Instagram or LinkedIn with millions of users. 
+                    Users are constantly forming connections:
+                </p>
+                <div class="callout tip">
+                    <div class="callout-title">🌐 The Dynamic Connectivity Challenge</div>
+                    <p>
+                        You receive an endless stream of two types of queries in real time:<br>
+                        1. <strong>Connect(u, v)</strong>: User <code>u</code> and User <code>v</code> just became friends.<br>
+                        2. <strong>IsConnected(u, v)</strong>: Are User <code>u</code> and User <code>v</code> in the same mutual friend network?
+                    </p>
+                </div>
+
+                <h3>Why Do Traditional Graph Algorithms Fail Here?</h3>
+                <p>
+                    A computer science student's first instinct might be: <em>"Why not just use BFS or DFS on a Graph?"</em>
+                </p>
+
+                <div class="compare-grid">
+                    <div class="compare-card bad">
+                        <span class="compare-badge">Standard Graph Traversal (BFS / DFS)</span>
+                        <h4>Why it's Too Slow</h4>
+                        <ul>
+                            <li>Checking if <code>u</code> reaches <code>v</code> requires walking the graph.</li>
+                            <li>Each query takes <strong>O(V + E)</strong> time.</li>
+                            <li>For $100,000$ queries on $100,000$ nodes, total time is $10^5 \times 10^5 = 10^{10}$ operations.</li>
+                            <li><strong>Result: Time Limit Exceeded (TLE)</strong>!</li>
+                        </ul>
+                    </div>
+                    <div class="compare-card bad">
+                        <span class="compare-badge">Component ID Array (comp[i])</span>
+                        <h4>Why it's Too Slow</h4>
+                        <ul>
+                            <li>Checking connection is fast: <code>comp[u] == comp[v]</code> takes <strong>O(1)</strong>.</li>
+                            <li>BUT merging requires looping over all $N$ elements to rewrite IDs: <strong>O(N)</strong> per merge.</li>
+                            <li>$N$ unions take <strong>O(N²)</strong> overall.</li>
+                            <li><strong>Result: Still Too Slow!</strong></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="callout">
+                    <div class="callout-title">💡 The DSU Solution</div>
+                    <p>
+                        <strong>Disjoint Set Union (DSU)</strong> solves this exact problem by balancing both operations. 
+                        It achieves both <strong>Union</strong> and <strong>Find</strong> in <strong>near O(1) amortized time</strong>, 
+                        making dynamic connectivity virtually instantaneous!
+                    </p>
+                </div>
+            </section>
+
+            <!-- 2. What is a Disjoint Set? -->
+            <section id="core-concept">
+                <div class="section-header">
+                    <span class="section-tag">Part 2 • Foundations</span>
+                    <h2>What is a Disjoint Set?</h2>
+                </div>
+                <p>
+                    In mathematics, two sets are said to be <strong>disjoint</strong> if they have no elements in common — their intersection is completely empty:
+                </p>
+                <div class="diagram-box">
+Set A = { 0, 1, 2 }
+Set B = { 3, 4 }
+Set C = { 5 }
+
+Intersection: A ∩ B = ∅,  B ∩ C = ∅,  A ∩ C = ∅
+Every element belongs to exactly ONE set!
+                </div>
+                <p>
+                    DSU maintains a collection of such non-overlapping, partition sets over $N$ items.
+                </p>
+
+                <h3>The "Clan Leader" Intuition</h3>
+                <p>
+                    Think of each set as an independent <strong>Clan</strong>. In every clan, there is exactly one recognized <strong>Leader</strong> (called the <strong>Root Representative</strong>):
+                </p>
+                <ul style="padding-left: 20px; color: var(--text-secondary); margin-bottom: 16px; display: flex; flex-direction: column; gap: 8px;">
+                    <li>When you want to know if two people belong to the same clan, you don't cross-check every member.</li>
+                    <li>You simply ask: <em>"Who is your clan leader?"</em></li>
+                    <li>If person $A$'s leader is person $B$'s leader, they are guaranteed to be in the same clan!</li>
+                    <li>When two clans decide to ally (Union), one clan leader bows down and designates the other leader as their new boss!</li>
+                </ul>
+            </section>
+
+            <!-- 3. Forest & Array Representation -->
+            <section id="representation">
+                <div class="section-header">
+                    <span class="section-tag">Part 3 • Under the Hood</span>
+                    <h2>Representing Trees with a Simple 1D Array</h2>
+                </div>
+                <p>
+                    One of the most beautiful aspects of DSU is that we <strong>do not need pointers, nodes, or linked list classes</strong>. 
+                    A forest of multiple trees is stored in a simple, flat integer array called <code>parent[]</code>:
+                </p>
+
+                <div class="array-table-wrapper">
+                    <table class="array-table">
+                        <thead>
+                            <tr>
+                                <th>Index (Node)</th>
+                                <th>0</th>
+                                <th>1</th>
+                                <th>2</th>
+                                <th>3</th>
+                                <th>4</th>
+                                <th>5</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <th style="text-align:left;">parent[i]</th>
+                                <td class="root-val">0</td>
+                                <td class="child-val">0</td>
+                                <td class="child-val">0</td>
+                                <td class="root-val">3</td>
+                                <td class="child-val">3</td>
+                                <td class="root-val">5</td>
+                            </tr>
+                            <tr>
+                                <th style="text-align:left;">Interpretation</th>
+                                <td>Leader (0)</td>
+                                <td>Points to 0</td>
+                                <td>Points to 0</td>
+                                <td>Leader (3)</td>
+                                <td>Points to 3</td>
+                                <td>Leader (5)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="callout tip">
+                    <div class="callout-title">🔑 The Golden Rule of Representatives</div>
+                    <p>
+                        A node <code>i</code> is the <strong>Root (Leader)</strong> of its component if and only if:
+                        <br>
+                        <code>parent[i] === i</code>
+                    </p>
+                </div>
+
+                <div class="diagram-box">
+  Tree 1 (Root: 0)         Tree 2 (Root: 3)         Tree 3 (Root: 5)
+        (0)                      (3)                      (5)
+       /   \                      |
+     (1)   (2)                   (4)
+                </div>
+                <div class="diagram-caption">A DSU forest with 3 disjoint components: {0, 1, 2}, {3, 4}, and {5}.</div>
+            </section>
+
+            <!-- 4. The 3 Core Operations -->
+            <section id="operations">
+                <div class="section-header">
+                    <span class="section-tag">Part 4 • Core Mechanics</span>
+                    <h2>The 3 Fundamental Operations</h2>
+                </div>
+                <p>
+                    Every DSU data structure supports three basic operations:
+                </p>
+
+                <h3>1. makeSet(n)</h3>
+                <p>
+                    Initializes $N$ elements. At the start, each element is isolated in its own independent set with size 1. 
+                    Each node is its own representative.
+                </p>
+                <div class="diagram-box">
+for (let i = 0; i < n; i++) {
+    parent[i] = i;  // Everyone is their own leader
+    size[i] = 1;    // Each set starts with 1 member
+}
+                </div>
+
+                <h3>2. find(x)</h3>
+                <p>
+                    Finds the ultimate leader (root) of the set containing element <code>x</code>. We follow parent pointers upward until we reach a node where <code>parent[root] == root</code>.
+                </p>
+
+                <h3>3. union(x, y)</h3>
+                <p>
+                    Merges the set containing <code>x</code> with the set containing <code>y</code>:
+                </p>
+                <ol style="padding-left: 24px; color: var(--text-secondary); display:flex; flex-direction:column; gap:6px; margin-bottom:16px;">
+                    <li>Find root of <code>x</code>: <code>rootX = find(x)</code></li>
+                    <li>Find root of <code>y</code>: <code>rootY = find(y)</code></li>
+                    <li>If <code>rootX === rootY</code>, they are already in the same set — do nothing!</li>
+                    <li>If <code>rootX !== rootY</code>, attach one root under the other: <code>parent[rootX] = rootY</code>.</li>
+                </ol>
+            </section>
+
+            <!-- 5. The Flaw of Naive DSU -->
+            <section id="naive-issue">
+                <div class="section-header">
+                    <span class="section-tag">Part 5 • The Danger</span>
+                    <h2>The Flaw of Naive DSU: The Skewed Chain Trap</h2>
+                </div>
+                <p>
+                    What happens if we implement <code>union(x, y)</code> naively by always attaching <code>rootX</code> to <code>rootY</code> without checking their sizes or heights?
+                </p>
+                <p>
+                    Consider sequentially uniting: <code>union(1, 0)</code>, <code>union(2, 1)</code>, <code>union(3, 2)</code>, <code>union(4, 3)</code>, <code>union(5, 4)</code>:
+                </p>
+                <div class="diagram-box">
+  (5)
+   ↓
+  (4)
+   ↓
+  (3)
+   ↓
+  (2)
+   ↓
+  (1)
+   ↓
+  (0) [Root]
+
+Find(5) must traverse 5 edges! Tree height = O(N)!
+                </div>
+                <div class="callout warning">
+                    <div class="callout-title">⚠️ The O(N) Worst Case Trap</div>
+                    <p>
+                        Without balancing heuristics, trees can degenerate into long linear chains (essentially linked lists). 
+                        A single <code>find(5)</code> call must visit all $N$ nodes, reducing performance to <strong>O(N)</strong>! 
+                        To prevent this, we introduce <strong>Union by Size</strong> or <strong>Union by Rank</strong>.
+                    </p>
+                </div>
+            </section>
+
+            <!-- 6. Union by Size vs Rank -->
+            <section id="optimizations">
+                <div class="section-header">
+                    <span class="section-tag">Part 6 • Balancing Heuristics</span>
+                    <h2>Optimization 1: Union by Size vs. Union by Rank</h2>
+                </div>
+                <p>
+                    The golden rule to prevent degenerate chains is simple: 
+                    <strong>Always attach the smaller tree under the root of the larger tree.</strong>
+                </p>
+
+                <div class="compare-grid">
+                    <div class="compare-card good">
+                        <span class="compare-badge">Option A: Union by Size (Recommended)</span>
+                        <h4>How it Works</h4>
+                        <ul>
+                            <li>Track element count in a <code>size[]</code> array (initialized to 1).</li>
+                            <li>Compare: <code>if (size[rootA] < size[rootB])</code></li>
+                            <li>Attach <code>rootA</code> under <code>rootB</code>.</li>
+                            <li>Update: <code>size[rootB] += size[rootA]</code>.</li>
+                            <li><strong>Bonus:</strong> Gives you connected component sizes for free (crucial for coding interviews!).</li>
+                        </ul>
+                    </div>
+                    <div class="compare-card good">
+                        <span class="compare-badge">Option B: Union by Rank</span>
+                        <h4>How it Works</h4>
+                        <ul>
+                            <li>Track upper-bound tree height in a <code>rank[]</code> array (initialized to 0).</li>
+                            <li>Attach the lower-rank root under the higher-rank root.</li>
+                            <li>Rank only increases by 1 when merging two trees of equal rank!</li>
+                            <li>Strictly bounds tree depth.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h3>Mathematical Proof: Why Tree Depth is Guaranteed O(log N)</h3>
+                <p>
+                    Why does attaching smaller trees to larger trees guarantee height $O(\log N)$?
+                </p>
+                <div class="callout tip">
+                    <div class="callout-title">📐 The Doubling Principle</div>
+                    <p>
+                        For a tree's height to increase by 1, it must be merged with another tree of at least equal size. 
+                        Therefore, every time height increases by 1, the total number of nodes in that component <strong>must at least double</strong>!
+                        <br><br>
+                        A tree of height $h$ must contain at least $2^h$ nodes:
+                        <br>
+                        $$2^h \le N \implies h \le \log_2 N$$
+                        <br>
+                        Even for $1,000,000$ nodes, $\log_2(10^6) \approx 20$. 
+                        Your tree will never exceed ~20 levels of depth!
+                    </p>
+                </div>
+            </section>
+
+            <!-- 7. Path Compression -->
+            <section id="path-compression">
+                <div class="section-header">
+                    <span class="section-tag">Part 7 • The Ultimate Flattening</span>
+                    <h2>Optimization 2: Path Compression (The Game Changer)</h2>
+                </div>
+                <p>
+                    While Union by Size reduces height to $O(\log N)$, <strong>Path Compression</strong> brings it all the way down to near <strong>O(1)</strong>!
+                </p>
+                <p>
+                    Notice what happens when you run <code>find(4)</code> on a tree. You traverse:
+                    <br>
+                    <code>4 → 3 → 2 → 1 → 0 (Root)</code>.
+                </p>
+                <p>
+                    <strong>Key Insight:</strong> Since we already took the time to walk up to root <code>0</code>, why should nodes 4, 3, and 2 keep their intermediate parent pointers? 
+                    They all belong to root <code>0</code>!
+                </p>
+
+                <div class="diagram-box">
+[BEFORE Find(4)]                   [AFTER Find(4) with Path Compression]
+      (0) [Root]                                (0) [Root]
+       ↑                                     ↗   ↑   ↖   ↖
+      (1)                                  (1)  (2)  (3)  (4)
+       ↑                                  
+      (2)                                 All visited nodes now point
+       ↑                                  DIRECTLY to root 0!
+      (3)
+       ↑
+      (4) [Query]
+                </div>
+
+                <h3>The One-Liner Magic</h3>
+                <p>
+                    In recursive code, path compression is implemented with just <strong>one single line</strong>:
+                </p>
+                <div class="diagram-box">
+function find(i) {
+    if (parent[i] === i) return i;
+    return parent[i] = find(parent[i]); // Path compression!
+}
+                </div>
+
+                <div class="callout">
+                    <div class="callout-title">🚀 What is O(α(N))? (The Inverse Ackermann Function)</div>
+                    <p>
+                        When both <strong>Union by Size/Rank</strong> and <strong>Path Compression</strong> are combined, 
+                        the amortized time complexity per operation becomes:
+                        <br><br>
+                        <strong style="font-size: 18px; color: var(--accent-light);">O(α(N))</strong>
+                        <br><br>
+                        $\alpha(N)$ is the <em>Inverse Ackermann Function</em>. It grows so unimaginably slowly that for any conceivable number in our universe:
+                        <br>
+                        For $N = 10^{600}$ (far more than the total atoms in the observable universe $\approx 10^{80}$), 
+                        <strong>$\alpha(N) \le 4$</strong>!
+                        <br><br>
+                        In practical computing, <strong>DSU operations run in constant O(1) time</strong>!
+                    </p>
+                </div>
+            </section>
+
+            <!-- 8. Real-World Applications -->
+            <section id="applications">
+                <div class="section-header">
+                    <span class="section-tag">Part 8 • Practical Relevance</span>
+                    <h2>Real-World & Interview Applications</h2>
+                </div>
+                <p>
+                    DSU is one of the most frequently asked data structures in coding interviews at Google, Amazon, Meta, and Microsoft.
+                </p>
+
+                <div class="app-grid">
+                    <div class="app-card">
+                        <div class="app-card-icon">🌲</div>
+                        <h4>Kruskal's MST Algorithm</h4>
+                        <p>Finding the Minimum Spanning Tree in weighted graphs by sorting edges and using DSU to prevent creating cycles.</p>
+                    </div>
+                    <div class="app-card">
+                        <div class="app-card-icon">🔄</div>
+                        <h4>Cycle Detection</h4>
+                        <p>Quickly identifying if adding an edge $(u, v)$ to an undirected graph creates a redundant cycle (LeetCode 684).</p>
+                    </div>
+                    <div class="app-card">
+                        <div class="app-card-icon">🏝️</div>
+                        <h4>Dynamic Island Counting</h4>
+                        <p>Handling grid cells turning from water into land dynamically and merging neighboring islands (Number of Islands II).</p>
+                    </div>
+                    <div class="app-card">
+                        <div class="app-card-icon">👥</div>
+                        <h4>Friend Circles / Social Networks</h4>
+                        <p>Counting how many distinct communities exist and finding the size of any person's friend group (LeetCode 547).</p>
+                    </div>
+                    <div class="app-card">
+                        <div class="app-card-icon">🧪</div>
+                        <h4>Percolation Theory</h4>
+                        <p>Simulating whether liquid will percolate from the top layer to the bottom in porous materials.</p>
+                    </div>
+                    <div class="app-card">
+                        <div class="app-card-icon">🖼️</div>
+                        <h4>Image Connected Components</h4>
+                        <p>Labeling blobs of adjacent foreground pixels in image segmentation and computer vision pipelines.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 9. Ready-to-Use Code Implementations -->
+            <section id="code">
+                <div class="section-header">
+                    <span class="section-tag">Part 9 • Implementation</span>
+                    <h2>Production-Ready Code (All Languages)</h2>
+                </div>
+                <p>
+                    Here is the complete, robust DSU implementation featuring both <strong>Union by Size</strong> and <strong>Path Compression</strong>:
+                </p>
+
+                <div class="code-container">
+                    <div class="code-tabs">
+                        <button class="code-tab active" onclick="switchCodeTab('tab-cpp')">C++</button>
+                        <button class="code-tab" onclick="switchCodeTab('tab-py')">Python</button>
+                        <button class="code-tab" onclick="switchCodeTab('tab-java')">Java</button>
+                        <button class="code-tab" onclick="switchCodeTab('tab-js')">JavaScript</button>
+                    </div>
+
+                    <!-- C++ Code Panel -->
+                    <div id="tab-cpp" class="code-panel active">
+<pre><code><span class="token-keyword">#include</span> <span class="token-var">&lt;vector&gt;</span>
+<span class="token-keyword">#include</span> <span class="token-var">&lt;numeric&gt;</span>
+
+<span class="token-keyword">class</span> <span class="token-type">DSU</span> {
+<span class="token-keyword">private:</span>
+    <span class="token-type">std::vector&lt;int&gt;</span> parent;
+    <span class="token-type">std::vector&lt;int&gt;</span> size;
+    <span class="token-type">int</span> numComponents;
+
+<span class="token-keyword">public:</span>
+    <span class="token-func">DSU</span>(<span class="token-type">int</span> n) : parent(n), size(n, <span class="token-num">1</span>), numComponents(n) {
+        <span class="token-type">std</span>::<span class="token-func">iota</span>(parent.begin(), parent.end(), <span class="token-num">0</span>); <span class="token-comment">// parent[i] = i</span>
+    }
+
+    <span class="token-type">int</span> <span class="token-func">find</span>(<span class="token-type">int</span> i) {
+        <span class="token-keyword">if</span> (parent[i] == i) <span class="token-keyword">return</span> i;
+        <span class="token-comment">// Path compression: flattens the tree dynamically</span>
+        <span class="token-keyword">return</span> parent[i] = <span class="token-func">find</span>(parent[i]);
+    }
+
+    <span class="token-type">bool</span> <span class="token-func">unite</span>(<span class="token-type">int</span> i, <span class="token-type">int</span> j) {
+        <span class="token-type">int</span> rootI = <span class="token-func">find</span>(i);
+        <span class="token-type">int</span> rootJ = <span class="token-func">find</span>(j);
+        <span class="token-keyword">if</span> (rootI == rootJ) <span class="token-keyword">return</span> <span class="token-keyword">false</span>; <span class="token-comment">// Already connected</span>
+
+        <span class="token-comment">// Union by size: attach smaller root under larger root</span>
+        <span class="token-keyword">if</span> (size[rootI] &lt; size[rootJ]) {
+            parent[rootI] = rootJ;
+            size[rootJ] += size[rootI];
+        } <span class="token-keyword">else</span> {
+            parent[rootJ] = rootI;
+            size[rootI] += size[rootJ];
+        }
+        numComponents--;
+        <span class="token-keyword">return</span> <span class="token-keyword">true</span>;
+    }
+
+    <span class="token-type">bool</span> <span class="token-func">connected</span>(<span class="token-type">int</span> i, <span class="token-type">int</span> j) {
+        <span class="token-keyword">return</span> <span class="token-func">find</span>(i) == <span class="token-func">find</span>(j);
+    }
+
+    <span class="token-type">int</span> <span class="token-func">getComponents</span>() <span class="token-keyword">const</span> { <span class="token-keyword">return</span> numComponents; }
+};</code></pre>
+                    </div>
+
+                    <!-- Python Code Panel -->
+                    <div id="tab-py" class="code-panel">
+<pre><code><span class="token-keyword">class</span> <span class="token-type">DSU</span>:
+    <span class="token-keyword">def</span> <span class="token-func">__init__</span>(self, n: <span class="token-type">int</span>):
+        self.parent = <span class="token-func">list</span>(<span class="token-func">range</span>(n))  <span class="token-comment"># Each node is its own parent</span>
+        self.size = [<span class="token-num">1</span>] * n           <span class="token-comment"># Each set starts with size 1</span>
+        self.num_components = n
+
+    <span class="token-keyword">def</span> <span class="token-func">find</span>(self, i: <span class="token-type">int</span>) -&gt; <span class="token-type">int</span>:
+        <span class="token-keyword">if</span> self.parent[i] == i:
+            <span class="token-keyword">return</span> i
+        <span class="token-comment"># Path compression</span>
+        self.parent[i] = self.<span class="token-func">find</span>(self.parent[i])
+        <span class="token-keyword">return</span> self.parent[i]
+
+    <span class="token-keyword">def</span> <span class="token-func">unite</span>(self, i: <span class="token-type">int</span>, j: <span class="token-type">int</span>) -&gt; <span class="token-type">bool</span>:
+        root_i = self.<span class="token-func">find</span>(i)
+        root_j = self.<span class="token-func">find</span>(j)
+        <span class="token-keyword">if</span> root_i == root_j:
+            <span class="token-keyword">return</span> <span class="token-keyword">False</span>  <span class="token-comment"># Cycle / already in same component</span>
+
+        <span class="token-comment"># Union by size</span>
+        <span class="token-keyword">if</span> self.size[root_i] &lt; self.size[root_j]:
+            self.parent[root_i] = root_j
+            self.size[root_j] += self.size[root_i]
+        <span class="token-keyword">else</span>:
+            self.parent[root_j] = root_i
+            self.size[root_i] += self.size[root_j]
+            
+        self.num_components -= <span class="token-num">1</span>
+        <span class="token-keyword">return</span> <span class="token-keyword">True</span>
+
+    <span class="token-keyword">def</span> <span class="token-func">connected</span>(self, i: <span class="token-type">int</span>, j: <span class="token-type">int</span>) -&gt; <span class="token-type">bool</span>:
+        <span class="token-keyword">return</span> self.<span class="token-func">find</span>(i) == self.<span class="token-func">find</span>(j)</code></pre>
+                    </div>
+
+                    <!-- Java Code Panel -->
+                    <div id="tab-java" class="code-panel">
+<pre><code><span class="token-keyword">public class</span> <span class="token-type">DSU</span> {
+    <span class="token-keyword">private int</span>[] parent;
+    <span class="token-keyword">private int</span>[] size;
+    <span class="token-keyword">private int</span> numComponents;
+
+    <span class="token-keyword">public</span> <span class="token-func">DSU</span>(<span class="token-keyword">int</span> n) {
+        parent = <span class="token-keyword">new int</span>[n];
+        size = <span class="token-keyword">new int</span>[n];
+        numComponents = n;
+        <span class="token-keyword">for</span> (<span class="token-keyword">int</span> i = <span class="token-num">0</span>; i &lt; n; i++) {
+            parent[i] = i;
+            size[i] = <span class="token-num">1</span>;
+        }
+    }
+
+    <span class="token-keyword">public int</span> <span class="token-func">find</span>(<span class="token-keyword">int</span> i) {
+        <span class="token-keyword">if</span> (parent[i] == i) <span class="token-keyword">return</span> i;
+        <span class="token-comment">// Path compression</span>
+        <span class="token-keyword">return</span> parent[i] = <span class="token-func">find</span>(parent[i]);
+    }
+
+    <span class="token-keyword">public boolean</span> <span class="token-func">unite</span>(<span class="token-keyword">int</span> i, <span class="token-keyword">int</span> j) {
+        <span class="token-keyword">int</span> rootI = <span class="token-func">find</span>(i);
+        <span class="token-keyword">int</span> rootJ = <span class="token-func">find</span>(j);
+        <span class="token-keyword">if</span> (rootI == rootJ) <span class="token-keyword">return false</span>;
+
+        <span class="token-keyword">if</span> (size[rootI] &lt; size[rootJ]) {
+            parent[rootI] = rootJ;
+            size[rootJ] += size[rootI];
+        } <span class="token-keyword">else</span> {
+            parent[rootJ] = rootI;
+            size[rootI] += size[rootJ];
+        }
+        numComponents--;
+        <span class="token-keyword">return true</span>;
+    }
+
+    <span class="token-keyword">public boolean</span> <span class="token-func">connected</span>(<span class="token-keyword">int</span> i, <span class="token-keyword">int</span> j) {
+        <span class="token-keyword">return</span> <span class="token-func">find</span>(i) == <span class="token-func">find</span>(j);
+    }
+}</code></pre>
+                    </div>
+
+                    <!-- JavaScript Code Panel -->
+                    <div id="tab-js" class="code-panel">
+<pre><code><span class="token-keyword">class</span> <span class="token-type">DSU</span> {
+    <span class="token-func">constructor</span>(n) {
+        <span class="token-keyword">this</span>.parent = Array.<span class="token-func">from</span>({ length: n }, (_, i) =&gt; i);
+        <span class="token-keyword">this</span>.size = <span class="token-keyword">new</span> <span class="token-type">Array</span>(n).<span class="token-func">fill</span>(<span class="token-num">1</span>);
+        <span class="token-keyword">this</span>.numComponents = n;
+    }
+
+    <span class="token-func">find</span>(i) {
+        <span class="token-keyword">if</span> (<span class="token-keyword">this</span>.parent[i] === i) <span class="token-keyword">return</span> i;
+        <span class="token-comment">// Path compression</span>
+        <span class="token-keyword">return</span> <span class="token-keyword">this</span>.parent[i] = <span class="token-keyword">this</span>.<span class="token-func">find</span>(<span class="token-keyword">this</span>.parent[i]);
+    }
+
+    <span class="token-func">unite</span>(i, j) {
+        <span class="token-keyword">const</span> rootI = <span class="token-keyword">this</span>.<span class="token-func">find</span>(i);
+        <span class="token-keyword">const</span> rootJ = <span class="token-keyword">this</span>.<span class="token-func">find</span>(j);
+        <span class="token-keyword">if</span> (rootI === rootJ) <span class="token-keyword">return false</span>;
+
+        <span class="token-keyword">if</span> (<span class="token-keyword">this</span>.size[rootI] &lt; <span class="token-keyword">this</span>.size[rootJ]) {
+            <span class="token-keyword">this</span>.parent[rootI] = rootJ;
+            <span class="token-keyword">this</span>.size[rootJ] += <span class="token-keyword">this</span>.size[rootI];
+        } <span class="token-keyword">else</span> {
+            <span class="token-keyword">this</span>.parent[rootJ] = rootI;
+            <span class="token-keyword">this</span>.size[rootI] += <span class="token-keyword">this</span>.size[rootJ];
+        }
+        <span class="token-keyword">this</span>.numComponents--;
+        <span class="token-keyword">return true</span>;
+    }
+
+    <span class="token-func">connected</span>(i, j) {
+        <span class="token-keyword">return</span> <span class="token-keyword">this</span>.<span class="token-func">find</span>(i) === <span class="token-keyword">this</span>.<span class="token-func">find</span>(j);
+    }
+}</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 10. Beginner Study Roadmap -->
+            <section id="roadmap">
+                <div class="section-header">
+                    <span class="section-tag">Part 10 • Learning Path</span>
+                    <h2>Step-by-Step Beginner Roadmap: How to Master DSU</h2>
+                </div>
+                <p>
+                    Follow this proven 4-stage roadmap to gain complete mastery over Disjoint Set Union:
+                </p>
+
+                <ul class="roadmap-list">
+                    <li class="roadmap-item">
+                        <div class="roadmap-number">1</div>
+                        <div class="roadmap-content">
+                            <h4>Build Mental Models First</h4>
+                            <p>Understand the Clan Leader analogy. Draw a small 5-node set on paper and trace the <code>parent[]</code> array by hand for 3 unions.</p>
+                        </div>
+                    </li>
+                    <li class="roadmap-item">
+                        <div class="roadmap-number">2</div>
+                        <div class="roadmap-content">
+                            <h4>Experiment in the Interactive Visualizer</h4>
+                            <p>Launch our visualizer sandbox. Connect nodes to intentionally build a vertical chain, then call <code>Find(x)</code> to see Path Compression flatten the tree before your eyes!</p>
+                        </div>
+                    </li>
+                    <li class="roadmap-item">
+                        <div class="roadmap-number">3</div>
+                        <div class="roadmap-content">
+                            <h4>Memorize the Template</h4>
+                            <p>DSU is one of the few algorithms where the entire template is only ~20 lines of code. Practice writing it from memory in your preferred language until it's second nature.</p>
+                        </div>
+                    </li>
+                    <li class="roadmap-item">
+                        <div class="roadmap-number">4</div>
+                        <div class="roadmap-content">
+                            <h4>Solve Essential LeetCode Problems</h4>
+                            <p>
+                                • <strong>LeetCode 547</strong>: Number of Provinces (Fundamental Component Counting)<br>
+                                • <strong>LeetCode 684</strong>: Redundant Connection (Cycle Detection)<br>
+                                • <strong>LeetCode 128</strong>: Longest Consecutive Sequence<br>
+                                • <strong>LeetCode 990</strong>: Satisfiability of Equality Equations
+                            </p>
+                        </div>
+                    </li>
+                </ul>
+            </section>
+
+            <!-- 11. How the Visualizer Helps -->
+            <section id="how-visualizer-helps">
+                <div class="section-header">
+                    <span class="section-tag">Part 11 • Supercharge Learning</span>
+                    <h2>How Our Visualizer Helps You Master DSU</h2>
+                </div>
+                <p>
+                    Reading code and theory is essential, but true algorithmic intuition comes from <strong>seeing the data structure move in real-time</strong>. 
+                    Here is how our visualizer bridges the gap:
+                </p>
+
+                <div class="app-grid">
+                    <div class="app-card">
+                        <div class="app-card-icon">🌲</div>
+                        <h4>Dynamic Physics Canvas</h4>
+                        <p>Watch elements naturally group into trees. Roots, children, and edges are color-coded in real-time as operations execute.</p>
+                    </div>
+                    <div class="app-card">
+                        <div class="app-card-icon">📊</div>
+                        <h4>Synchronized Array Highlight</h4>
+                        <p>See exactly which cells in <code>parent[]</code> and <code>size[]</code> change at each moment. Never wonder what pointer changed again.</p>
+                    </div>
+                    <div class="app-card">
+                        <div class="app-card-icon">⏪</div>
+                        <h4>Step-by-Step Playback Controls</h4>
+                        <p>Step backward, step forward, play, or pause. Slow down critical path compression steps to see recursion unwind call by call.</p>
+                    </div>
+                    <div class="app-card">
+                        <div class="app-card-icon">💻</div>
+                        <h4>Live Code Stepper</h4>
+                        <p>The code window highlights the exact line of code (e.g. <code>parent[i] = find(...)</code>) matching the visual action on canvas.</p>
+                    </div>
+                </div>
+
+                <!-- Call to Action Box -->
+                <div class="visualizer-cta-box">
+                    <h3>Ready to See DSU in Action?</h3>
+                    <p>
+                        Put your theoretical knowledge to the test. Open our interactive sandbox visualizer, test unions, and observe path compression in real-time!
+                    </p>
+                    <a href="index.html" class="btn-cta" style="padding: 14px 32px; font-size: 16px;">
+                        🚀 Launch Interactive DSU Visualizer
+                    </a>
+                </div>
+            </section>
+
+        </article>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p>
+            Interactive Disjoint Set Union Visualizer & Learning Platform • Designed for Computer Science Students & Interview Preparation
+        </p>
+        <p style="margin-top: 6px;">
+            <a href="index.html">← Back to Visualizer</a>
+        </p>
+    </footer>
+
+    <!-- Tab Switching Script -->
+    <script>
+        function switchCodeTab(tabId) {
+            document.querySelectorAll('.code-tab').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.code-panel').forEach(panel => panel.classList.remove('active'));
+            
+            const activePanel = document.getElementById(tabId);
+            if (activePanel) activePanel.classList.add('active');
+            
+            const eventBtn = event.currentTarget;
+            if (eventBtn) eventBtn.classList.add('active');
+        }
+    </script>
+</body>
+</html>
